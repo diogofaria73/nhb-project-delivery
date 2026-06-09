@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 14% 93%;
+    --foreground: 220 14% 16%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 14% 16%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 14% 16%;
+
+    --primary: 220 14% 22%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 13% 88%;
+    --secondary-foreground: 220 14% 22%;
+
+    --muted: 220 13% 88%;
+    --muted-foreground: 220 9% 42%;
+
+    --accent: 220 13% 88%;
+    --accent-foreground: 220 14% 22%;
+
+    --destructive: 10 45% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 82%;
+    --input: 220 12% 75%;
+    --ring: 206 30% 50%;
+    --radius: 0.75rem;
+
+    --sidebar: 0 0% 100%;
+  }
+
+  .dark {
+    --background: 220 18% 6%;
+    --foreground: 220 9% 93%;
+
+    --card: 220 14% 14%;
+    --card-foreground: 220 9% 93%;
+
+    --popover: 220 14% 14%;
+    --popover-foreground: 220 9% 93%;
+
+    --primary: 220 9% 88%;
+    --primary-foreground: 220 18% 6%;
+
+    --secondary: 220 13% 18%;
+    --secondary-foreground: 220 9% 80%;
+
+    --muted: 220 13% 18%;
+    --muted-foreground: 220 6% 58%;
+
+    --accent: 220 13% 20%;
+    --accent-foreground: 220 9% 93%;
+
+    --destructive: 10 50% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 12% 26%;
+    --input: 220 10% 30%;
+    --ring: 206 30% 55%;
+
+    --sidebar: 220 14% 11%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Manrope', sans-serif;
+  }
+}
+
+@layer utilities {
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

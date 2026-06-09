@@ -1,0 +1,28 @@
+{
+  "name": "nhb-project-delivery",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Project delivery management and status reporting platform for NHB (Norsk Hydro Brazil)",
+  "scripts": {
+    "dev:api": "pnpm --filter @nhb-status-report/api dev",
+    "dev:web": "pnpm --filter @nhb-status-report/web dev",
+    "dev": "pnpm run --parallel dev:api dev:web",
+    "build:api": "pnpm --filter @nhb-status-report/api build",
+    "build:web": "pnpm --filter @nhb-status-report/web build",
+    "build": "pnpm run --parallel build:api build:web",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "clean": "pnpm -r clean",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "bootstrap": "pnpm install && pnpm run bootstrap:env && pnpm docker:up && pnpm run bootstrap:wait-db && pnpm --filter @nhb-status-report/api prisma:generate && pnpm --filter @nhb-status-report/api prisma:migrate && pnpm --filter @nhb-status-report/api prisma:seed && pnpm dev",
+    "bootstrap:env": "node scripts/setup-env.js",
+    "bootstrap:wait-db": "node scripts/wait-for-db.js"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.0"
+}
