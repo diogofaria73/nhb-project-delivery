@@ -31,6 +31,10 @@ coverage/
 # Prisma
 apps/api/prisma/generated/
 
+# Local file storage (LocalDiskStorage uploads)
+apps/api/storage/
+apps/api/uploads/
+
 # Misc
 *.tsbuildinfo
 .turbo/

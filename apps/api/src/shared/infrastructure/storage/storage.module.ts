@@ -1,13 +1,22 @@
 import { Global, Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { AzureBlobStorage } from './azure-blob.storage';
 import { LocalDiskStorage } from './local-disk.storage';
-import { STORAGE_PROVIDER } from './storage.interface';
+import { IStorageProvider, STORAGE_PROVIDER } from './storage.interface';
 
 @Global()
 @Module({
   providers: [
     {
       provide: STORAGE_PROVIDER,
-      useClass: LocalDiskStorage,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService): IStorageProvider => {
+        const driver = config.get<string>('STORAGE_DRIVER') ?? 'local';
+        if (driver === 'azure-blob') {
+          return new AzureBlobStorage(config);
+        }
+        return new LocalDiskStorage(config);
+      },
     },
   ],
   exports: [STORAGE_PROVIDER],
