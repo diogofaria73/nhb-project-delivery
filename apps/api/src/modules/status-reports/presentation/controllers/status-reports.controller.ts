@@ -166,7 +166,8 @@ export class StatusReportsController {
   }
 
   @Get(':id/attachments/:attachmentId')
-  @ApiOperation({ summary: 'Stream an attachment file' })
+  @Roles('ADMINISTRATOR')
+  @ApiOperation({ summary: 'Stream an attachment file (Admin only)' })
   async downloadAttachment(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('attachmentId', ParseUUIDPipe) attachmentId: string,

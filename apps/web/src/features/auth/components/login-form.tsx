@@ -28,7 +28,7 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
   async function onSubmit(data: LoginFormData) {
     setLoading(true);
     try {
-      const { token: _token, redirectTo, ...user } = await authService.login(data);
+      const { redirectTo, ...user } = await authService.login(data);
       localStorage.setItem('user', JSON.stringify(user));
       if (user.mustChangePassword) {
         window.location.href = '/first-login';

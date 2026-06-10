@@ -1,5 +1,6 @@
 import {
   Controller,
+  ForbiddenException,
   Get,
   Post,
   Put,
@@ -72,7 +73,8 @@ export class UsersController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all users with filters and pagination' })
+  @Roles('ADMINISTRATOR')
+  @ApiOperation({ summary: 'List all users with filters and pagination (Admin only)' })
   @ApiResponse({ status: 200, description: 'Paginated list of users' })
   async findAll(@Query() query: ListUsersQueryDto) {
     return this.listUsersUseCase.execute(query);
@@ -86,10 +88,17 @@ export class UsersController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Find a user by ID' })
+  @ApiOperation({ summary: 'Find a user by ID (Admin or self)' })
   @ApiResponse({ status: 200, description: 'User found' })
+  @ApiResponse({ status: 403, description: 'Cannot read another user profile' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    if (currentUser.role !== 'ADMINISTRATOR' && currentUser.userId !== id) {
+      throw new ForbiddenException('You can only read your own profile');
+    }
     return this.findUserUseCase.execute(id);
   }
 

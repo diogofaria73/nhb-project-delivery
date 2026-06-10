@@ -13,7 +13,6 @@ interface RegisterPayload {
 }
 
 interface AuthResponse {
-  token: string;
   id: string;
   name: string;
   email: string;
@@ -39,8 +38,8 @@ export const authService = {
     return apiClient.post<RegisterResponse>('/users', payload);
   },
 
-  async me(): Promise<Omit<AuthResponse, 'token'>> {
-    return apiClient.get<Omit<AuthResponse, 'token'>>('/auth/me');
+  async me(): Promise<AuthResponse> {
+    return apiClient.get<AuthResponse>('/auth/me');
   },
 
   async logout(): Promise<void> {
