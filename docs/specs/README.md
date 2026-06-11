@@ -2,31 +2,24 @@
 
 ## Overview
 
-This directory contains the User Stories (USs) describing the platform's base features. Each file corresponds to a system module.
+This directory contains the User Stories (USs) that describe the platform's implemented features. Each file is the source of truth for the corresponding module — acceptance criteria, business rules, permission matrix and technical notes.
 
 ---
 
 ## Module Index
 
-| File | Module | User Stories |
+| File | Module | Scope |
 |---|---|---|
 | [US-01-authentication.md](./US-01-authentication.md) | Authentication | Login, account lockout, logout |
 | [US-02-users.md](./US-02-users.md) | User Management (RBAC) | List, create, edit, activate/deactivate, unlock, mandatory first-login password change |
-| [US-08-project-tracking-import.md](./US-08-project-tracking-import.md) | Project Tracking via Annual Excel Import | Upload the consolidated annual spreadsheet, snapshot it server-side, render KPIs and per-project weekly compliance on the Dashboard |
-| [US-09-dashboard-hydro-visual.md](./US-09-dashboard-hydro-visual.md) | Dashboard Status Report (visual Hydro) | Redesign the Dashboard with the Hydro brand: dark theme, Ivar Display typography, interactive donut, bullet charts with target, manager bars, weekly chart with month band, and a sortable detail table |
-| [US-09-implementation-plan.md](./US-09-implementation-plan.md) | Implementation plan for US-09 | Phased plan (theme, compute utils, filters hook, SVG charts, page rewrite, cleanup, tests) — companion document to US-09 |
+| [US-08-project-tracking-import.md](./US-08-project-tracking-import.md) | Project Tracking via Annual Excel Import | Upload the consolidated annual spreadsheet, snapshot it server-side, list / restore / delete import versions |
+| [US-09-dashboard-hydro-visual.md](./US-09-dashboard-hydro-visual.md) | Dashboard Status Report (Hydro visual) | Hydro-themed Dashboard built on top of US-08: filters (year / status / month / week), bullet KPIs, interactive donut, manager bars, weekly chart and sortable + paginated project table |
 
-### Superseded by US-08
+### Fixture
 
-The following modules described the original Company × Month flow. They are kept for historical context but are **no longer the source of truth** — US-08 replaces them end-to-end.
-
-| File | Module | Replaced by |
-|---|---|---|
-| [US-03-companies.md](./US-03-companies.md) | Company Management (Service Providers) | US-08 |
-| [US-04-status-report-submissions.md](./US-04-status-report-submissions.md) | Status Report Submissions | US-08 |
-| [US-05-status-report-analytics.md](./US-05-status-report-analytics.md) | Status Report Analytics | US-08 |
-| [US-06-status-report-goals.md](./US-06-status-report-goals.md) | Status Report Delivery Goals | US-08 |
-| [US-07-excel-exports.md](./US-07-excel-exports.md) | Structured Excel Exports | US-08 |
+| File | Purpose |
+|---|---|
+| `StatusReportBI_2026.xlsx` | Sample workbook used by the parser unit tests in `apps/api/src/modules/project-tracking/infrastructure/parsers/spreadsheet.parser.spec.ts`. |
 
 ---
 
@@ -34,12 +27,14 @@ The following modules described the original Company × Month flow. They are kep
 
 | Profile | Description |
 |---|---|
-| **Administrator** | Full system access, including user management |
-| **User** | Standard access, can view project dashboard |
+| **Administrator** | Full system access: user management, spreadsheet imports, restore / delete imports |
+| **User** | Read-only access to the Dashboard and project details |
 
 ---
 
 ## Business Rules Summary
+
+### Authentication (US-01) & User Management (US-02)
 
 | Code | Description | US |
 |---|---|---|
@@ -59,39 +54,45 @@ The following modules described the original Company × Month flow. They are kep
 | BR-14 | A user under the first-login flow is restricted to the First-login screen until the flag is cleared | US-02.6 |
 | BR-15 | A successful mandatory password change atomically clears `mustChangePassword` and activates the user | US-02.6 |
 | BR-16 | Auth responses expose `mustChangePassword` and a `redirectTo` hint so clients can enforce the flow | US-02.6 |
-| BR-17 | CNPJ must be unique per company (stored normalized as 14 digits) | US-03.2 |
-| BR-18 | CNPJ must pass check-digit validation before persistence | US-03.2 |
-| BR-19 | New companies are created with `isActive = true` by default | US-03.2 |
-| BR-20 | CNPJ is immutable after company creation | US-03.3 |
-| BR-21 | Deactivation is a soft toggle; company data and historical reports are preserved | US-03.4 |
-| BR-22 | Status reports cannot be submitted for companies with `isActive = false` (cross-module) | US-03.4, US-04.2 |
-| BR-23 | A status report submission must reference an Active company | US-04.2 |
-| BR-24 | `submittedAt` (delivery date) is server-generated; clients cannot set or override it | US-04.2 |
-| BR-25 | Delivery email must be a syntactically valid email | US-04.2 |
-| BR-26 | Attachments are optional; per-file ≤ 25 MB, total per submission ≤ 50 MB | US-04.2 |
-| BR-27 | Attachments persist filename, MIME type, size and an opaque storage reference; MIME allow-list enforced at the gateway | US-04.2 |
-| BR-28 | Reference month is required, defaults to current month, future months rejected | US-04.2 |
-| BR-29 | Delivery date and Company on a submission are immutable after creation | US-04.4 |
-| BR-30 | On-time = `submittedAt ≤ end of referenceMonth` (UTC); otherwise late. Missed = no submission for a past reference month | US-04, US-05 |
-| BR-31 | Analytics consume the BR-30 classification — no separate scoring is computed | US-05 |
-| BR-32 | A company is in the **expected set** for a month only if `createdAt ≤ end of month`; deactivation excludes future months but preserves past ones | US-05 |
-| BR-33 | KPI deltas compare to the previous equivalent window; hidden when the prior window has no expected deliveries | US-05.1 |
-| BR-34 | Analytics aggregations run server-side via `GROUP BY` (no N+1 from the application layer) | US-05 |
-| BR-35 | Exports never include credentials/tokens; only fields already visible on a submission detail page | US-05.5 |
-| BR-36 | A delivery goal applies uniformly to every currently active company | US-06.1 |
-| BR-37 | `deliveriesPerPeriod` is integer ≥ 1 (soft cap 366) — total entregas expected **per company** for the period | US-06.1 |
-| BR-38 | `monthlyDeadlineDay` is integer 1..31 — day-of-month cutoff for **goal on-time**; auto-clamps to the last day when the month is shorter | US-06.1 |
-| BR-39 | `(periodType, year, periodIndex)` is unique per goal | US-06.1 |
-| BR-40 | Per-company status: **hit** when `onTime ≥ expected`; **at-risk** when `delivered ≥ expected` but `onTime < expected`; **off-track** when `delivered < expected` | US-06.3 |
-| BR-41 | Companies created after the period end are excluded from that goal's calculation | US-06.3 |
-| BR-42 | Goal period identity (`periodType`, `year`, `periodIndex`) is immutable after creation | US-06.4 |
-| BR-43 | Concluded goals allow only notes-edits — never `deliveriesPerPeriod` or `monthlyDeadlineDay` changes | US-06.4 |
-| BR-44 | Concluded goals cannot be deleted; they may only be archived | US-06.5 |
-| BR-45 | Analytics exports are returned as XLSX, not CSV | US-07.1 |
-| BR-46 | Every workbook follows the common style guide | US-07.1, US-07.2 |
-| BR-47 | Goal export honors the same `project` parameter as the JSON breakdown | US-07.2 |
-| BR-48 | Goal export uses the common style guide | US-07.2 |
-| BR-49 | A central `WorkbookStyleGuide` module is the single source of truth for fonts, colors and number formats | US-07.3 |
+
+### Project Tracking Import (US-08)
+
+| Code | Description | US |
+|---|---|---|
+| BR-50 | `.xlsx` upload must contain a sheet matching `StatusReport_*_NovaFormula` (any year suffix); the workbook's year is informational only — the form-supplied `referenceYear` drives the snapshot. | US-08.1 |
+| BR-51 | Required header columns: `Project ID`, `Project Name`, `Status Projeto`, `Semana 1` … `Semana 52` (missing any column aborts the import). | US-08.1 |
+| BR-52 | A row is valid when `Project ID` is non-empty and `Status Projeto` parses to the enum; week cells must be blank or `ok` (case-insensitive). | US-08.1 |
+| BR-53 | Duplicate `Project ID` within the same upload keeps the first occurrence and reports subsequent ones as `duplicate-in-file`. | US-08.1 |
+| BR-54 | At most **one ACTIVE import per `referenceYear`** (enforced by a partial unique index + transactional flip in confirm / restore). | US-08.1, US-08.5 |
+| BR-55 | The raw uploaded `.xlsx` is retained for the lifetime of the import row; deleting the import deletes the file. | US-08.5 |
+| BR-56 | Totals from the spreadsheet are discarded on import — the backend recomputes everything from the 52 weekly flags. The `BI` sheet's numbers feed a sanity-check that surfaces warnings (≥ 1 unit or ≥ 1 p.p. divergence). | US-08.1 |
+| BR-57 | Weeks `Semana 1`…`Semana 52` map to ISO 8601 weeks of `referenceYear`. Years with ISO week 53 are handled: missing `Semana 53` is treated as 0 expected / 0 sent + a warning. | US-08.1 |
+| BR-58 | The Dashboard always reads the single `ACTIVE` import for the selected `referenceYear`. | US-09 |
+| BR-59 | KPI percentages have `totalProjects` as denominator; a year with zero projects renders dashes. | US-09 |
+| BR-60 | "Expected weeks" denominator is capped at `currentISOWeek` (`min(end-of-project-week, currentISOWeek)`) to avoid artificially low compliance at the start of the year. | US-09 |
+| BR-61 | Standard Users see the full Dashboard but never see import metadata beyond the header strip; the link to `/dashboard/imports` is hidden. | US-08, US-09 |
+| BR-62 | Restore is atomic: it never leaves a `referenceYear` with zero or more than one `ACTIVE` import. | US-08.5 |
+| BR-63 | Delete cascades to `ProjectSnapshot` rows and the stored file. The `ACTIVE` import cannot be deleted directly. | US-08.5 |
+| BR-64 | The **current ISO week** used by KPI and freshness calculations is the ISO 8601 week of `now()` in `America/Sao_Paulo`. This is the only place the backend reads the wall clock for analytics. | US-08 |
+| BR-65 | Freshness badge thresholds: green ≤ 7d, amber 8–14d, red > 14d. Driven exclusively by `max(importedAt)` for the active import. | US-08, US-09 |
+
+### Dashboard Visual (US-09)
+
+| Code | Description | US |
+|---|---|---|
+| BR-66 | Target institutional fixed at 85% for the bullet charts. | US-09.2 |
+| BR-67 | Project cumulative % uses W (selected week) as denominator: `popcount(weekFlags[1..W]) / W × 100`. | US-09 |
+| BR-68 | Projects whose status is not `ACTIVE` are treated as 0% for the "Acumulado anual" KPI and manager-bars averages (still appear with real values in the table). | US-09.2, US-09.4 |
+| BR-69 | KPI Acumulado anual: arithmetic mean of `cumulativePct` of visible projects (with BR-68). | US-09.2 |
+| BR-70 | KPI Envio da semana corrente: `(visible projects with bit W) / (visible projects) × 100`. | US-09.2 |
+| BR-71 | Donut counts use the projects after the global status multi-select; the donut never filters itself. | US-09.3 |
+| BR-72 | Donut cross-filter affects the table only. Cleared automatically when the focused status leaves the global selection. | US-09.3, US-09.6 |
+| BR-73 | Manager bars group visible projects by `pm`; empty / 0% PMs are omitted; ordered desc by percent. | US-09.4 |
+| BR-74 | Weekly chart percentage for week `w` = `(visible projects with bit w) / (visible projects) × 100`, for `w = 1..W`. | US-09.5 |
+| BR-75 | Detail table lists visible projects (after global filter), further filtered by the donut focus. | US-09.6 |
+| BR-76 | Month filter groups the Week select's options. Picking "All months" disables the Week select and reverts W to the current ISO week (year-to-date view). | US-09.1 |
+| BR-77 | The Dashboard always operates on the `referenceYear` chosen in the topbar; the cross-year navigation goes through the Import history. | US-09.1 |
+| BR-78 | When the selected month has zero submissions across the visible projects, a banner explains why and offers a "clear month filter" action. | US-09 |
 
 ---
 
