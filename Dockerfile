@@ -90,6 +90,11 @@ WORKDIR /app/apps/api
 
 EXPOSE 3000
 
+# Pre-create the upload directory so its named volume mount inherits the
+# `nhb` ownership; otherwise Docker creates it as root and the non-root
+# runtime user can't write uploaded files.
+RUN mkdir -p /app/storage
+
 # Non-root user.
 RUN addgroup -S nhb && adduser -S nhb -G nhb \
     && chown -R nhb:nhb /app
