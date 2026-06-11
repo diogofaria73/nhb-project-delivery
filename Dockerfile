@@ -51,8 +51,12 @@ RUN npx prisma generate
 RUN pnpm build
 RUN npx tsc prisma/seed.ts --outDir dist/seed --esModuleInterop --skipLibCheck
 
-# Resolve pnpm symlinks into real files so they can be COPYed cleanly.
-RUN cp -rL /app/node_modules /app/node_modules_resolved
+# Preserve the pnpm symlink structure intact. `cp -rL` would dereference
+# every symlink, but workspace symlinks (e.g. /app/apps/web) don't exist
+# in this stage. `cp -a` keeps the symlinks; at runtime the API only
+# follows links that resolve inside `.pnpm/`, so broken cross-workspace
+# links are harmless.
+RUN cp -a /app/node_modules /app/node_modules_resolved
 
 # ── 4) Production image ───────────────────────────────────────────────
 FROM node:20-alpine AS production
@@ -63,11 +67,18 @@ RUN apk add --no-cache tini
 
 # API runtime
 COPY --from=build-api /app/node_modules_resolved ./node_modules
+# Project-level node_modules contains pnpm symlinks that point UP to the
+# top-level `.pnpm/` virtual store. We need them so Node.js can resolve
+# the API's own runtime deps (`@prisma/client`, `@nestjs/*`, etc.).
+COPY --from=build-api /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=build-api /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY --from=build-api /app/apps/api/dist ./apps/api/dist
 COPY --from=build-api /app/apps/api/prisma ./apps/api/prisma
 COPY --from=build-api /app/apps/api/dist/seed ./apps/api/dist/seed
 COPY apps/api/package.json ./apps/api/
 COPY apps/api/entrypoint.sh ./apps/api/
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/shared/src ./packages/shared/src
 
 # Web build (static assets served by NestJS)
 COPY --from=build-web /app/apps/web/dist ./web-dist

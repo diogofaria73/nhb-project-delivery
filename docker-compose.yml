@@ -3,8 +3,9 @@ services:
     image: postgres:16-alpine
     container_name: nhb-status-report-postgres
     restart: unless-stopped
-    ports:
-      - "5432:5432"
+    # Host port not published on purpose to avoid clashing with other Postgres
+    # containers on 5432. Inspect with:
+    #   docker exec -it nhb-status-report-postgres psql -U postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -16,6 +17,41 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - nhb-net
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nhb-status-report:local
+    container_name: nhb-status-report-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      # Internal DNS — `postgres` resolves to the postgres service on the
+      # shared compose network.
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/nhb_status_report?schema=public
+      JWT_SECRET: nhb-local-secret-change-before-prod
+      JWT_EXPIRATION: "28800"
+      CORS_ORIGIN: http://localhost:3000
+      STORAGE_DRIVER: local
+      STORAGE_LOCAL_PATH: /app/storage
+    ports:
+      - "3000:3000"
+    volumes:
+      - app_storage:/app/storage
+    networks:
+      - nhb-net
 
 volumes:
   postgres_data:
+  app_storage:
+
+networks:
+  nhb-net:
+    driver: bridge

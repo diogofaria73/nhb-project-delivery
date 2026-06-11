@@ -13,6 +13,9 @@
 .idea
 .vscode
 **/uploads
-**/storage
+# Runtime upload directories — narrow patterns so they don't shadow
+# the `src/shared/infrastructure/storage/` code folder.
+apps/api/storage/
+/storage/
 docker-compose.yml
 **/.dockerignore
