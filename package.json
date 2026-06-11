@@ -16,6 +16,9 @@
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
+    "docker:build": "docker compose build app",
+    "docker:deploy": "docker compose build app && docker compose up -d",
+    "docker:rebuild": "docker compose down && docker compose build app --no-cache && docker compose up -d",
     "bootstrap": "pnpm install && pnpm run bootstrap:env && pnpm docker:up && pnpm run bootstrap:wait-db && pnpm --filter @nhb-status-report/api prisma:generate && pnpm --filter @nhb-status-report/api prisma:migrate && pnpm --filter @nhb-status-report/api prisma:seed && pnpm dev",
     "bootstrap:env": "node scripts/setup-env.js",
     "bootstrap:wait-db": "node scripts/wait-for-db.js"
