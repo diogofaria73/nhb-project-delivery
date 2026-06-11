@@ -3,7 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Users,
-  Building2,
+  LayoutDashboard,
+  History,
   UserCircle,
   ChevronsLeft,
   ChevronsRight,
@@ -14,8 +15,6 @@ import {
   Languages,
   LogOut,
   ChevronsUpDown,
-  FileText,
-  Target,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AppLogo } from '@/components/app-logo';
@@ -154,16 +153,20 @@ function SidebarContent({ collapsed, onToggle: _onToggle, onNavigate, hideCollap
 
   const allGroups: NavGroup[] = [
     {
-      label: t('sidebar.groups.reports'),
+      label: t('sidebar.groups.tracking'),
       items: [
-        { label: t('sidebar.statusReports'), icon: FileText, href: '/status-reports' },
-        { label: t('sidebar.goals'), icon: Target, href: '/goals' },
+        { label: t('sidebar.dashboard'), icon: LayoutDashboard, href: '/dashboard' },
+        {
+          label: t('sidebar.importHistory'),
+          icon: History,
+          href: '/dashboard/imports',
+          roles: ['ADMINISTRATOR'],
+        },
       ],
     },
     {
       label: t('sidebar.groups.administration'),
       items: [
-        { label: t('sidebar.companies'), icon: Building2, href: '/companies', roles: ['ADMINISTRATOR'] },
         { label: t('sidebar.users'), icon: Users, href: '/users', roles: ['ADMINISTRATOR'] },
       ],
     },

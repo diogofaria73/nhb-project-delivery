@@ -7,7 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { authService } from '@/services/auth.service';
-import { registerSchema, type RegisterFormData } from '../types/auth-form.schema';
+import {
+  registerSchema,
+  type RegisterFormData,
+} from '../types/auth-form.schema';
 
 interface RegisterFormProps {
   onLoginClick: () => void;
@@ -34,7 +37,9 @@ export function RegisterForm({ onLoginClick, onSuccess }: RegisterFormProps) {
       onSuccess();
     } catch (error) {
       const err = error as { message?: string | string[] };
-      const msg = Array.isArray(err.message) ? err.message.join(', ') : err.message;
+      const msg = Array.isArray(err.message)
+        ? err.message.join(', ')
+        : err.message;
       toast.error(msg || t('auth.registrationFailed'));
     } finally {
       setLoading(false);
@@ -43,96 +48,183 @@ export function RegisterForm({ onLoginClick, onSuccess }: RegisterFormProps) {
 
   return (
     <div>
-      <div className="mb-8 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+      <div style={{ marginBottom: 28 }}>
+        <p
+          style={{
+            fontSize: 10.5,
+            textTransform: 'uppercase',
+            letterSpacing: '.22em',
+            color: 'var(--hy-teal-bright)',
+            fontWeight: 600,
+            marginBottom: 8,
+          }}
+        >
+          Status Report
+        </p>
+        <h1
+          className="hy-display"
+          style={{
+            fontSize: 32,
+            margin: 0,
+            color: 'var(--hy-ink)',
+            letterSpacing: '-0.01em',
+            lineHeight: 1.05,
+          }}
+        >
           {t('auth.register')}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p
+          style={{
+            marginTop: 8,
+            fontSize: 13,
+            color: 'var(--hy-ink-dim)',
+            lineHeight: 1.5,
+          }}
+        >
           {t('auth.registerDescription')}
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="name" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {t('auth.fullName')}
-          </Label>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        style={{ display: 'flex', flexDirection: 'column', gap: 18 }}
+      >
+        <Field
+          id="name"
+          label={t('auth.fullName')}
+          error={errors.name?.message}
+        >
           <Input
             id="name"
             {...register('name')}
             placeholder={t('auth.fullNamePlaceholder')}
-            className="h-10"
+            style={{ height: 44 }}
           />
-          {errors.name && (
-            <p className="text-xs text-destructive">{errors.name.message}</p>
-          )}
-        </div>
+        </Field>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="reg-email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {t('auth.email')}
-          </Label>
+        <Field
+          id="reg-email"
+          label={t('auth.email')}
+          error={errors.email?.message}
+        >
           <Input
             id="reg-email"
             type="email"
             {...register('email')}
             placeholder={t('auth.emailPlaceholder')}
-            className="h-10"
+            style={{ height: 44 }}
           />
-          {errors.email && (
-            <p className="text-xs text-destructive">{errors.email.message}</p>
-          )}
-        </div>
+        </Field>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="reg-password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {t('auth.password')}
-            </Label>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 14,
+          }}
+        >
+          <Field
+            id="reg-password"
+            label={t('auth.password')}
+            error={errors.password?.message}
+          >
             <Input
               id="reg-password"
               type="password"
               {...register('password')}
               placeholder={t('auth.passwordMin')}
-              className="h-10"
+              style={{ height: 44 }}
             />
-            {errors.password && (
-              <p className="text-xs text-destructive">{errors.password.message}</p>
-            )}
-          </div>
+          </Field>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="reg-confirm" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {t('auth.confirmPassword')}
-            </Label>
+          <Field
+            id="reg-confirm"
+            label={t('auth.confirmPassword')}
+            error={errors.passwordConfirmation?.message}
+          >
             <Input
               id="reg-confirm"
               type="password"
               {...register('passwordConfirmation')}
               placeholder={t('auth.confirmPlaceholder')}
-              className="h-10"
+              style={{ height: 44 }}
             />
-            {errors.passwordConfirmation && (
-              <p className="text-xs text-destructive">{errors.passwordConfirmation.message}</p>
-            )}
-          </div>
+          </Field>
         </div>
 
-        <Button type="submit" className="h-10 w-full font-semibold" disabled={loading}>
+        <Button
+          type="submit"
+          disabled={loading}
+          style={{
+            height: 46,
+            marginTop: 4,
+            background: 'var(--hy-teal)',
+            color: '#1b2027',
+            fontWeight: 600,
+            fontSize: 14,
+            letterSpacing: '.02em',
+            border: '1px solid var(--hy-teal-bright)',
+          }}
+        >
           {loading ? t('auth.creating') : t('auth.createAccount')}
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p
+        style={{
+          marginTop: 24,
+          textAlign: 'center',
+          fontSize: 13,
+          color: 'var(--hy-ink-dim)',
+        }}
+      >
         {t('auth.hasAccount')}{' '}
         <button
           type="button"
           onClick={onLoginClick}
-          className="font-semibold text-foreground hover:underline"
+          style={{
+            all: 'unset',
+            cursor: 'pointer',
+            fontWeight: 600,
+            color: 'var(--hy-teal-bright)',
+          }}
         >
           {t('auth.signIn')}
         </button>
       </p>
+    </div>
+  );
+}
+
+function Field({
+  id,
+  label,
+  error,
+  children,
+}: {
+  id: string;
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <Label
+        htmlFor={id}
+        style={{
+          fontSize: 10.5,
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          letterSpacing: '.14em',
+          color: 'var(--hy-ink-faint)',
+        }}
+      >
+        {label}
+      </Label>
+      {children}
+      {error && (
+        <p style={{ fontSize: 11.5, color: '#cf6a55', margin: 0 }}>{error}</p>
+      )}
     </div>
   );
 }

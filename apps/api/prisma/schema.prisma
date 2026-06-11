@@ -12,10 +12,20 @@ enum Role {
   USER
 }
 
-enum GoalPeriodType {
-  QUARTERLY
-  SEMESTRAL
-  ANNUAL
+enum ProjectStatus {
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+  NOT_STARTED
+}
+
+enum ProjectImportStatus {
+  PENDING
+  PROCESSING
+  ACTIVE
+  SUPERSEDED
+  FAILED
 }
 
 model User {
@@ -27,94 +37,58 @@ model User {
   isActive  Boolean  @default(true) @map("is_active")
   mustChangePassword Boolean @default(false) @map("must_change_password")
 
-  // Lockout fields (for brute-force protection)
   failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
   lockedUntil         DateTime? @map("locked_until")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  submissions    StatusReportSubmission[]
-  goalsCreated   StatusReportGoal[] @relation("GoalsCreated")
-  goalsUpdated   StatusReportGoal[] @relation("GoalsUpdated")
+  imports   ProjectImport[]
 
   @@map("users")
 }
 
-model Company {
-  id           String   @id @default(uuid())
-  tradeName    String   @map("trade_name")
-  legalName    String   @map("legal_name")
-  cnpj         String   @unique
-  contactEmail String   @map("contact_email")
-  contactPhone String?  @map("contact_phone")
-  notes        String?
-  isActive     Boolean  @default(true) @map("is_active")
+model ProjectImport {
+  id               String              @id @default(uuid())
+  referenceYear    Int                 @map("reference_year")
+  status           ProjectImportStatus @default(PENDING)
+  originalFilename String              @map("original_filename")
+  fileSizeBytes    Int                 @map("file_size_bytes")
+  sha256           String
+  storageKey       String              @map("storage_key")
+  parseReport      Json                @map("parse_report")
+  rowsAccepted     Int                 @default(0) @map("rows_accepted")
+  rowsRejected     Int                 @default(0) @map("rows_rejected")
+  importedById     String              @map("imported_by_id")
+  importedAt       DateTime            @default(now()) @map("imported_at")
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  importedBy User              @relation(fields: [importedById], references: [id])
+  snapshots  ProjectSnapshot[]
 
-  submissions StatusReportSubmission[]
-
-  @@index([isActive])
-  @@map("companies")
+  @@index([referenceYear, status])
+  @@index([importedAt])
+  @@map("project_imports")
 }
 
-model StatusReportSubmission {
-  id              String   @id @default(uuid())
-  companyId       String   @map("company_id")
-  referenceMonth  DateTime @map("reference_month") @db.Date
-  deliveryEmail   String   @map("delivery_email")
-  notes           String?
-  submittedById   String   @map("submitted_by_id")
-  submittedAt     DateTime @default(now()) @map("submitted_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+model ProjectSnapshot {
+  id                String        @id @default(uuid())
+  importId          String        @map("import_id")
+  projectId         String        @map("project_id")
+  projectName       String        @map("project_name")
+  projectStatus     ProjectStatus @map("project_status")
+  responsible       String?
+  responsibleDetail String?       @map("responsible_detail")
+  pm                String?
+  notes             String?
+  weekFlags         Bytes         @map("week_flags")
+  weeksSent         Int           @default(0) @map("weeks_sent")
+  weeksExpected     Int           @default(0) @map("weeks_expected")
+  firstActiveWeek   Int?          @map("first_active_week")
+  lastSentWeek      Int?          @map("last_sent_week")
 
-  company         Company  @relation(fields: [companyId], references: [id])
-  submittedBy     User     @relation(fields: [submittedById], references: [id])
-  attachments     StatusReportAttachment[]
+  import ProjectImport @relation(fields: [importId], references: [id], onDelete: Cascade)
 
-  @@index([companyId, referenceMonth])
-  @@index([submittedAt])
-  @@map("status_report_submissions")
-}
-
-model StatusReportGoal {
-  id                       String         @id @default(uuid())
-  periodType               GoalPeriodType @map("period_type")
-  year                     Int
-  periodIndex              Int?           @map("period_index")
-  startDate                DateTime       @map("start_date") @db.Date
-  endDate                  DateTime       @map("end_date") @db.Date
-  deliveriesPerPeriod      Int            @map("deliveries_per_period")
-  monthlyDeadlineDay       Int            @default(25) @map("monthly_deadline_day")
-  notes                    String?
-  isArchived               Boolean        @default(false) @map("is_archived")
-  createdById              String         @map("created_by_id")
-  updatedById              String?        @map("updated_by_id")
-  createdAt                DateTime       @default(now()) @map("created_at")
-  updatedAt                DateTime       @updatedAt @map("updated_at")
-
-  createdBy User  @relation("GoalsCreated", fields: [createdById], references: [id])
-  updatedBy User? @relation("GoalsUpdated", fields: [updatedById], references: [id])
-
-  @@unique([periodType, year, periodIndex])
-  @@index([startDate, endDate])
-  @@index([isArchived])
-  @@map("status_report_goals")
-}
-
-model StatusReportAttachment {
-  id           String   @id @default(uuid())
-  submissionId String   @map("submission_id")
-  filename     String
-  mimeType     String   @map("mime_type")
-  sizeBytes    Int      @map("size_bytes")
-  storageKey   String   @map("storage_key")
-  uploadedAt   DateTime @default(now()) @map("uploaded_at")
-
-  submission   StatusReportSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-
-  @@index([submissionId])
-  @@map("status_report_attachments")
+  @@index([importId])
+  @@index([importId, projectStatus])
+  @@map("project_snapshots")
 }

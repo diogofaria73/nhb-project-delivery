@@ -33,7 +33,7 @@ export function AdminLayout() {
           collapsed ? 'md:pl-[72px]' : 'md:pl-[260px]',
         )}
       >
-        <div className="mx-auto max-w-6xl px-4 py-8 pt-16 sm:px-6 md:pt-8 lg:px-8">
+        <div className="mx-auto max-w-[1440px] px-4 py-8 pt-16 sm:px-6 md:pt-8 lg:px-8">
           <Outlet />
         </div>
       </main>

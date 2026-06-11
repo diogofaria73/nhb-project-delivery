@@ -1,0 +1,414 @@
+/*
+ * Hydro brand theme — scoped to routes that opt-in via class `theme-hydro` on <html>.
+ * Applied/removed by DashboardPage via the HydroThemeScope wrapper.
+ *
+ * Fonts: Ivar Display / Ivar Text are loaded from /brand/fonts/ when the assets exist;
+ * otherwise the browser falls back to Crimson Pro or Georgia (system serif).
+ */
+
+@font-face {
+  font-family: 'Ivar Display Hydro';
+  src:
+    url('/brand/fonts/IvarDisplayHydro-Regular.ttf') format('truetype'),
+    local('Crimson Pro'),
+    local('Georgia');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Ivar Text Hydro';
+  src:
+    url('/brand/fonts/IvarTextHydro-Regular.ttf') format('truetype'),
+    local('Crimson Pro'),
+    local('Georgia');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Ivar Text Hydro';
+  src:
+    url('/brand/fonts/IvarTextHydro-Bold.ttf') format('truetype'),
+    local('Crimson Pro Bold'),
+    local('Georgia Bold');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* --- LIGHT mode (default when .theme-hydro is present without .dark) --- */
+.theme-hydro {
+  /* Hydro design tokens — light variant (warm off-white surfaces). */
+  --hy-bg: #f4f1ea;
+  --hy-panel: #ffffff;
+  --hy-panel-h: #f0ece3;
+  --hy-line: #d8d3c8;
+  --hy-ink: #1f242c;
+  --hy-ink-dim: #5b6470;
+  --hy-ink-faint: #8a929c;
+
+  /* Brand accents — same across modes. */
+  --hy-teal: #4f9c92;
+  --hy-teal-bright: #62b3a8;
+  --hy-taupe: #c5b9ac;
+  --hy-status-on-hold: #9a6b80;
+  --hy-status-not-started: #cf6a55;
+  --hy-status-cancelled: #7a828c;
+
+  /* Neutral tracks/bars/grids — light variants. */
+  --hy-track: #e7e2d4;
+  --hy-track-mid: #ddd6c3;
+  --hy-track-high: #d2c9b0;
+  --hy-bar-muted: #b6afa1;
+  --hy-gridline: rgba(31, 36, 44, 0.08);
+  --hy-row-border: rgba(31, 36, 44, 0.07);
+  --hy-section-bg: rgba(31, 36, 44, 0.025);
+  --hy-marker: #2c333d;
+  --hy-skeleton-from: #ece8de;
+  --hy-skeleton-to: #f4f1ea;
+
+  /* Shadcn token overrides — light. */
+  --background: 41 30% 94%;        /* ~ #f4f1ea */
+  --foreground: 215 18% 15%;       /* ~ #1f242c */
+  --card: 0 0% 100%;
+  --card-foreground: 215 18% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 18% 15%;
+  --primary: 173 31% 46%;          /* teal */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 41 18% 88%;
+  --secondary-foreground: 215 18% 15%;
+  --muted: 41 18% 88%;
+  --muted-foreground: 215 9% 40%;  /* ~ #5b6470 */
+  --accent: 41 18% 88%;
+  --accent-foreground: 215 18% 15%;
+  --destructive: 358 50% 48%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 39 16% 81%;            /* ~ #d8d3c8 */
+  --input: 39 16% 81%;
+  --ring: 169 33% 54%;             /* teal-bright */
+  --sidebar: 41 28% 96%;
+}
+
+/* --- DARK mode (next-themes adds .dark) --- */
+.theme-hydro.dark,
+.dark.theme-hydro {
+  --hy-bg: #1b2027;
+  --hy-panel: #252b34;
+  --hy-panel-h: #2c333d;
+  --hy-line: #39414c;
+  --hy-ink: #eceae4;
+  --hy-ink-dim: #9aa3ad;
+  --hy-ink-faint: #6b7480;
+
+  --hy-track: #353d47;
+  --hy-track-mid: #3d4654;
+  --hy-track-high: #455064;
+  --hy-bar-muted: #5a636e;
+  --hy-gridline: rgba(236, 234, 228, 0.06);
+  --hy-row-border: rgba(57, 65, 76, 0.55);
+  --hy-section-bg: rgba(44, 51, 61, 0.5);
+  --hy-marker: #eceae4;
+  --hy-skeleton-from: #252b34;
+  --hy-skeleton-to: #2c333d;
+
+  --background: 213 18% 13%;
+  --foreground: 39 16% 91%;
+  --card: 215 16% 18%;
+  --card-foreground: 39 16% 91%;
+  --popover: 215 16% 20%;
+  --popover-foreground: 39 16% 91%;
+  --primary: 173 31% 46%;
+  --primary-foreground: 213 18% 13%;
+  --secondary: 215 14% 22%;
+  --secondary-foreground: 39 16% 91%;
+  --muted: 215 14% 22%;
+  --muted-foreground: 213 8% 64%;
+  --accent: 215 14% 22%;
+  --accent-foreground: 39 16% 91%;
+  --destructive: 358 50% 48%;
+  --destructive-foreground: 39 16% 91%;
+  --border: 215 11% 26%;
+  --input: 215 11% 26%;
+  --ring: 169 33% 54%;
+  --sidebar: 215 18% 15%;
+}
+
+@keyframes hy-shimmer {
+  0%, 100% { background-position: 100% 0; }
+  50% { background-position: 0 0; }
+}
+
+/* --- Chart entrance animations --- */
+@keyframes hy-grow-w {
+  from { width: 0; }
+}
+
+@keyframes hy-grow-h {
+  from { height: 0; }
+}
+
+@keyframes hy-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hy-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes hy-donut-sweep {
+  from {
+    stroke-dasharray: 0 9999;
+  }
+}
+
+@keyframes hy-row-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.hy-bar-grow {
+  animation: hy-grow-h 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: bottom center;
+}
+
+.hy-bar-grow-w {
+  animation: hy-grow-w 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.hy-fade-up {
+  animation: hy-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.hy-fade-in {
+  animation: hy-fade-in 0.45s ease both;
+}
+
+.hy-donut-sweep {
+  animation: hy-donut-sweep 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hy-bar-grow,
+  .hy-bar-grow-w,
+  .hy-fade-up,
+  .hy-fade-in,
+  .hy-donut-sweep {
+    animation: none !important;
+  }
+}
+
+.theme-hydro,
+.theme-hydro body {
+  background: var(--hy-bg)
+    radial-gradient(1200px 600px at 80% -10%, rgba(98, 179, 168, 0.08) 0%, transparent 60%);
+  color: var(--hy-ink);
+  font-variant-numeric: tabular-nums;
+  font-family: 'Manrope', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing: -0.005em;
+}
+
+.theme-hydro.dark,
+.theme-hydro.dark body {
+  background: var(--hy-bg)
+    radial-gradient(1200px 600px at 80% -10%, #2a323d 0%, transparent 60%);
+}
+
+.theme-hydro h1,
+.theme-hydro h2,
+.theme-hydro h3 {
+  color: var(--hy-ink);
+  letter-spacing: -0.01em;
+}
+
+.theme-hydro .text-muted-foreground {
+  color: var(--hy-ink-dim);
+}
+
+/* Hydro overrides for shadcn primitives — these classes appear across the app. */
+.theme-hydro [class*='border-input'],
+.theme-hydro [class*='border-border'] {
+  border-color: var(--hy-line);
+}
+
+.theme-hydro input,
+.theme-hydro textarea,
+.theme-hydro select {
+  background-color: var(--hy-panel);
+  color: var(--hy-ink);
+  border-color: var(--hy-line);
+}
+
+.theme-hydro input:focus,
+.theme-hydro textarea:focus,
+.theme-hydro select:focus {
+  border-color: var(--hy-teal-bright);
+  box-shadow: 0 0 0 3px rgba(98, 179, 168, 0.18);
+  outline: none;
+}
+
+.theme-hydro a {
+  color: var(--hy-teal-bright);
+}
+
+.theme-hydro .hy-display {
+  font-family: 'Ivar Display Hydro', 'Crimson Pro', Georgia, serif;
+  font-weight: 400;
+}
+
+.theme-hydro .hy-text {
+  font-family: 'Ivar Text Hydro', 'Crimson Pro', Georgia, serif;
+}
+
+.theme-hydro .hy-panel {
+  background: var(--hy-panel);
+  border: 1px solid var(--hy-line);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.02) inset, 0 24px 60px -32px rgba(0, 0, 0, 0.45);
+}
+
+.theme-hydro .hy-panel-header {
+  background: var(--hy-panel-h);
+  border-bottom: 1px solid var(--hy-line);
+  padding: 18px 24px 14px;
+}
+
+.theme-hydro .hy-panel-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--hy-ink);
+}
+
+.theme-hydro .hy-panel-subtitle {
+  font-size: 12px;
+  color: var(--hy-ink-dim);
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+}
+
+.theme-hydro .hy-panel-body {
+  padding: 26px 24px 28px;
+}
+
+.theme-hydro .hy-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--hy-ink-faint);
+}
+
+.theme-hydro .hy-control {
+  background: var(--hy-panel);
+  border: 1px solid var(--hy-line);
+  color: var(--hy-ink);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  min-width: 148px;
+  height: 40px;
+  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+}
+
+.theme-hydro .hy-control:hover,
+.theme-hydro .hy-control:focus,
+.theme-hydro .hy-control:focus-visible {
+  border-color: var(--hy-teal-bright);
+  outline: none;
+}
+
+.theme-hydro .hy-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 4px 11px;
+  font-size: 12px;
+  border: 1px solid;
+}
+
+.theme-hydro .hy-pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.theme-hydro .hy-popover {
+  background: var(--hy-panel-h);
+  border: 1px solid var(--hy-line);
+  border-radius: 9px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+  color: var(--hy-ink);
+}
+
+.theme-hydro .hy-back-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid var(--hy-line);
+  background: transparent;
+  color: var(--hy-ink-dim);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.18s ease, color 0.18s ease;
+}
+
+.theme-hydro .hy-back-btn:hover {
+  border-color: var(--hy-teal-bright);
+  color: var(--hy-teal-bright);
+}
+
+.theme-hydro .hy-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 36px 44px 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.theme-hydro .hy-grid-12 {
+  display: grid;
+  gap: 24px;
+}
+
+.theme-hydro .hy-section-divider {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--hy-line) 20%,
+    var(--hy-line) 80%,
+    transparent
+  );
+  opacity: 0.5;
+  margin: 4px 0;
+}
+
+@media (max-width: 960px) {
+  .theme-hydro .hy-grid-12 {
+    grid-template-columns: 1fr !important;
+  }
+}

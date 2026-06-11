@@ -12,11 +12,21 @@ This directory contains the User Stories (USs) describing the platform's base fe
 |---|---|---|
 | [US-01-authentication.md](./US-01-authentication.md) | Authentication | Login, account lockout, logout |
 | [US-02-users.md](./US-02-users.md) | User Management (RBAC) | List, create, edit, activate/deactivate, unlock, mandatory first-login password change |
-| [US-03-companies.md](./US-03-companies.md) | Company Management (Service Providers) | List, create, edit, view, activate/deactivate companies authorized to submit status reports |
-| [US-04-status-report-submissions.md](./US-04-status-report-submissions.md) | Status Report Submissions | Log each delivery (auto delivery date, delivery email, attachments), list/view/edit/delete |
-| [US-05-status-report-analytics.md](./US-05-status-report-analytics.md) | Status Report Analytics | KPIs, monthly trend chart, per-company compliance, heatmap, CSV export |
-| [US-06-status-report-goals.md](./US-06-status-report-goals.md) | Status Report Delivery Goals | Global compliance targets per quarter / semester / year, with per-company breakdown and analytics integration |
-| [US-07-excel-exports.md](./US-07-excel-exports.md) | Structured Excel Exports | Replace CSV exports with styled XLSX workbooks (cover sheet, KPIs, conditional formatting) for analytics and goal breakdown |
+| [US-08-project-tracking-import.md](./US-08-project-tracking-import.md) | Project Tracking via Annual Excel Import | Upload the consolidated annual spreadsheet, snapshot it server-side, render KPIs and per-project weekly compliance on the Dashboard |
+| [US-09-dashboard-hydro-visual.md](./US-09-dashboard-hydro-visual.md) | Dashboard Status Report (visual Hydro) | Redesign the Dashboard with the Hydro brand: dark theme, Ivar Display typography, interactive donut, bullet charts with target, manager bars, weekly chart with month band, and a sortable detail table |
+| [US-09-implementation-plan.md](./US-09-implementation-plan.md) | Implementation plan for US-09 | Phased plan (theme, compute utils, filters hook, SVG charts, page rewrite, cleanup, tests) — companion document to US-09 |
+
+### Superseded by US-08
+
+The following modules described the original Company × Month flow. They are kept for historical context but are **no longer the source of truth** — US-08 replaces them end-to-end.
+
+| File | Module | Replaced by |
+|---|---|---|
+| [US-03-companies.md](./US-03-companies.md) | Company Management (Service Providers) | US-08 |
+| [US-04-status-report-submissions.md](./US-04-status-report-submissions.md) | Status Report Submissions | US-08 |
+| [US-05-status-report-analytics.md](./US-05-status-report-analytics.md) | Status Report Analytics | US-08 |
+| [US-06-status-report-goals.md](./US-06-status-report-goals.md) | Status Report Delivery Goals | US-08 |
+| [US-07-excel-exports.md](./US-07-excel-exports.md) | Structured Excel Exports | US-08 |
 
 ---
 

@@ -8,9 +8,7 @@ import { PrismaModule } from './shared/infrastructure/database/prisma.module';
 import { JwtAuthGuard } from './shared/infrastructure/guards/jwt-auth.guard';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
-import { CompaniesModule } from './modules/companies/companies.module';
-import { StatusReportsModule } from './modules/status-reports/status-reports.module';
-import { StatusReportGoalsModule } from './modules/status-report-goals/status-report-goals.module';
+import { ProjectTrackingModule } from './modules/project-tracking/project-tracking.module';
 import { StorageModule } from './shared/infrastructure/storage/storage.module';
 
 const WEB_BUILD_PATH =
@@ -39,9 +37,7 @@ const WEB_BUILD_EXISTS = fs.existsSync(WEB_BUILD_PATH);
     StorageModule,
     AuthModule,
     UsersModule,
-    CompaniesModule,
-    StatusReportsModule,
-    StatusReportGoalsModule,
+    ProjectTrackingModule,
   ],
   providers: [
     {

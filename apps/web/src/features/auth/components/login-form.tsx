@@ -35,7 +35,7 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
         return;
       }
       window.location.href =
-        redirectTo && redirectTo !== '/' ? redirectTo : '/status-reports';
+        redirectTo && redirectTo !== '/' ? redirectTo : '/dashboard';
     } catch (error) {
       const err = error as { message?: string };
       toast.error(err.message || t('auth.invalidCredentials'));
@@ -46,63 +46,148 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
 
   return (
     <div>
-      <div className="mb-8 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+      <div style={{ marginBottom: 28 }}>
+        <p
+          style={{
+            fontSize: 10.5,
+            textTransform: 'uppercase',
+            letterSpacing: '.22em',
+            color: 'var(--hy-teal-bright)',
+            fontWeight: 600,
+            marginBottom: 8,
+          }}
+        >
+          Status Report
+        </p>
+        <h1
+          className="hy-display"
+          style={{
+            fontSize: 32,
+            margin: 0,
+            color: 'var(--hy-ink)',
+            letterSpacing: '-0.01em',
+            lineHeight: 1.05,
+          }}
+        >
           {t('auth.signIn')}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p
+          style={{
+            marginTop: 8,
+            fontSize: 13,
+            color: 'var(--hy-ink-dim)',
+            lineHeight: 1.5,
+          }}
+        >
           {t('auth.signInDescription')}
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {t('auth.email')}
-          </Label>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        style={{ display: 'flex', flexDirection: 'column', gap: 18 }}
+      >
+        <Field
+          id="email"
+          label={t('auth.email')}
+          error={errors.email?.message}
+        >
           <Input
             id="email"
             type="email"
             {...register('email')}
             placeholder={t('auth.emailPlaceholder')}
-            className="h-10"
+            style={{ height: 44 }}
           />
-          {errors.email && (
-            <p className="text-xs text-destructive">{errors.email.message}</p>
-          )}
-        </div>
+        </Field>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {t('auth.password')}
-          </Label>
+        <Field
+          id="password"
+          label={t('auth.password')}
+          error={errors.password?.message}
+        >
           <Input
             id="password"
             type="password"
             {...register('password')}
             placeholder={t('auth.passwordPlaceholder')}
-            className="h-10"
+            style={{ height: 44 }}
           />
-          {errors.password && (
-            <p className="text-xs text-destructive">{errors.password.message}</p>
-          )}
-        </div>
+        </Field>
 
-        <Button type="submit" className="h-10 w-full font-semibold" disabled={loading}>
+        <Button
+          type="submit"
+          disabled={loading}
+          style={{
+            height: 46,
+            marginTop: 4,
+            background: 'var(--hy-teal)',
+            color: '#1b2027',
+            fontWeight: 600,
+            fontSize: 14,
+            letterSpacing: '.02em',
+            border: '1px solid var(--hy-teal-bright)',
+          }}
+        >
           {loading ? t('auth.signingIn') : t('auth.signIn')}
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p
+        style={{
+          marginTop: 24,
+          textAlign: 'center',
+          fontSize: 13,
+          color: 'var(--hy-ink-dim)',
+        }}
+      >
         {t('auth.noAccount')}{' '}
         <button
           type="button"
           onClick={onRegisterClick}
-          className="font-semibold text-foreground hover:underline"
+          style={{
+            all: 'unset',
+            cursor: 'pointer',
+            fontWeight: 600,
+            color: 'var(--hy-teal-bright)',
+          }}
         >
           {t('auth.requestAccess')}
         </button>
       </p>
+    </div>
+  );
+}
+
+function Field({
+  id,
+  label,
+  error,
+  children,
+}: {
+  id: string;
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <Label
+        htmlFor={id}
+        style={{
+          fontSize: 10.5,
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          letterSpacing: '.14em',
+          color: 'var(--hy-ink-faint)',
+        }}
+      >
+        {label}
+      </Label>
+      {children}
+      {error && (
+        <p style={{ fontSize: 11.5, color: '#cf6a55', margin: 0 }}>{error}</p>
+      )}
     </div>
   );
 }

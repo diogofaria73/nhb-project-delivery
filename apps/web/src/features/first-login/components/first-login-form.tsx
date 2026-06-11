@@ -45,7 +45,7 @@ export function FirstLoginForm() {
       localStorage.setItem('user', JSON.stringify(fresh));
 
       toast.success(t('firstLogin.success'));
-      navigate('/status-reports', { replace: true });
+      navigate('/dashboard', { replace: true });
     } catch (error) {
       const err = error as { message?: string };
       toast.error(err.message || t('firstLogin.errors.generic'));
@@ -55,22 +55,42 @@ export function FirstLoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/[0.08] p-3.5 text-[13px] text-foreground">
-        <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-500" />
-        <div className="space-y-1">
-          <p className="font-medium">{t('firstLogin.notice.title')}</p>
-          <p className="text-muted-foreground">{t('firstLogin.notice.body')}</p>
+    <form
+      onSubmit={handleSubmit}
+      style={{ display: 'flex', flexDirection: 'column', gap: 18 }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 12,
+          padding: 14,
+          borderRadius: 10,
+          border: '1px solid rgba(207, 106, 85, 0.35)',
+          background: 'rgba(207, 106, 85, 0.08)',
+          fontSize: 12.5,
+          color: 'var(--hy-ink)',
+        }}
+      >
+        <ShieldAlert
+          size={16}
+          color="var(--hy-status-not-started)"
+          style={{ marginTop: 2, flexShrink: 0 }}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <p style={{ fontWeight: 600, margin: 0 }}>
+            {t('firstLogin.notice.title')}
+          </p>
+          <p style={{ margin: 0, color: 'var(--hy-ink-dim)' }}>
+            {t('firstLogin.notice.body')}
+          </p>
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label
-          htmlFor="currentPassword"
-          className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-        >
-          {t('firstLogin.fields.current')}
-        </Label>
+      <Field
+        id="currentPassword"
+        label={t('firstLogin.fields.current')}
+      >
         <Input
           id="currentPassword"
           type="password"
@@ -78,18 +98,12 @@ export function FirstLoginForm() {
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
           placeholder={t('firstLogin.fields.currentPlaceholder')}
-          className="h-10"
+          style={{ height: 44 }}
           required
         />
-      </div>
+      </Field>
 
-      <div className="space-y-1.5">
-        <Label
-          htmlFor="newPassword"
-          className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-        >
-          {t('firstLogin.fields.new')}
-        </Label>
+      <Field id="newPassword" label={t('firstLogin.fields.new')}>
         <Input
           id="newPassword"
           type="password"
@@ -97,19 +111,13 @@ export function FirstLoginForm() {
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           placeholder={t('firstLogin.fields.newPlaceholder')}
-          className="h-10"
+          style={{ height: 44 }}
           required
           minLength={8}
         />
-      </div>
+      </Field>
 
-      <div className="space-y-1.5">
-        <Label
-          htmlFor="confirmPassword"
-          className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-        >
-          {t('firstLogin.fields.confirm')}
-        </Label>
+      <Field id="confirmPassword" label={t('firstLogin.fields.confirm')}>
         <Input
           id="confirmPassword"
           type="password"
@@ -117,20 +125,59 @@ export function FirstLoginForm() {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           placeholder={t('firstLogin.fields.confirmPlaceholder')}
-          className="h-10"
+          style={{ height: 44 }}
           required
           minLength={8}
         />
-      </div>
+      </Field>
 
       <Button
         type="submit"
-        className="h-10 w-full font-semibold"
-        disabled={loading || !currentPassword || !newPassword || !confirmPassword}
+        disabled={
+          loading || !currentPassword || !newPassword || !confirmPassword
+        }
+        style={{
+          height: 46,
+          marginTop: 4,
+          background: 'var(--hy-teal)',
+          color: '#1b2027',
+          fontWeight: 600,
+          fontSize: 14,
+          letterSpacing: '.02em',
+          border: '1px solid var(--hy-teal-bright)',
+        }}
       >
-        <KeyRound className="mr-2 h-4 w-4" />
+        <KeyRound style={{ marginRight: 8 }} size={16} />
         {loading ? t('firstLogin.submitting') : t('firstLogin.submit')}
       </Button>
     </form>
+  );
+}
+
+function Field({
+  id,
+  label,
+  children,
+}: {
+  id: string;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <Label
+        htmlFor={id}
+        style={{
+          fontSize: 10.5,
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          letterSpacing: '.14em',
+          color: 'var(--hy-ink-faint)',
+        }}
+      >
+        {label}
+      </Label>
+      {children}
+    </div>
   );
 }

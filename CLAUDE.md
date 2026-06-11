@@ -2,7 +2,9 @@
 
 ## Overview
 
-Platform for project delivery management and status reporting for the NHB (Norsk Hydro Brazil) client. Administrators manage users and oversee all project data; standard users access the project dashboard to track delivery status. Built with DDD Clean Architecture, ready to extend with new domain modules (projects, deliverables, status reports, etc.).
+Platform for project delivery management and status reporting for the NHB (Norsk Hydro Brazil) client. The single source of truth for delivery data is an annual Excel spreadsheet (`StatusReportBI_YYYY.xlsx`) that the PMO re-uploads every week. The platform parses it, snapshots it as a versioned import, and exposes Project × ISO-week KPIs on the Dashboard. Administrators manage users and own the import flow; standard users see the Dashboard read-only. Built with DDD Clean Architecture.
+
+The current domain modules are: `auth`, `users`, `project-tracking`. The previous `companies`, `status-reports`, and `status-report-goals` modules were retired by US-08 — see `docs/specs/US-08-project-tracking-import.md` and the "Superseded by US-08" section of `docs/specs/README.md`.
 
 ## Tech Stack
 
@@ -126,105 +128,100 @@ src/
 
 When creating any new feature, follow these steps strictly. Do NOT deviate from the folder structure or naming patterns.
 
-### Backend — Adding a New Domain Module (e.g., "institutions")
+### Backend — Adding a New Domain Module (template: the existing `project-tracking` module)
 
-Each domain module is a self-contained bounded context. Create the full vertical slice under `src/modules/`:
+Each domain module is a self-contained bounded context. The reference implementation lives at `apps/api/src/modules/project-tracking/` — when in doubt, mirror its layout. The vertical slice for a hypothetical new module `[domain]` looks like:
 
 ```
-src/modules/institutions/
+src/modules/[domain]/
 ├── domain/
-│   ├── entities/institution.entity.ts              # Domain entity with business logic
-│   ├── value-objects/institution-name.vo.ts        # Value objects (if needed)
-│   └── repositories/institution.repository.ts      # Interface only (IInstitutionRepository)
+│   ├── entities/[entity].entity.ts                 # Domain entity with business logic
+│   ├── repositories/[entity].repository.ts         # Interface + injection token
+│   ├── services/[name].service.ts                  # Domain services (e.g., IsoWeekService)
+│   └── errors/[domain].errors.ts                   # Domain-specific errors
 ├── application/
 │   ├── dtos/
-│   │   ├── create-institution.dto.ts               # Input DTO with class-validator
-│   │   └── institution-response.dto.ts             # Output DTO
+│   │   ├── [verb]-[entity].dto.ts                  # Input DTO with class-validator
+│   │   └── [entity]-response.dto.ts                # Output DTO
 │   └── use-cases/
-│       ├── create-institution.use-case.ts          # One file per use case
-│       ├── find-institution.use-case.ts
+│       ├── [verb]-[entity].use-case.ts             # One file per use case
 │       └── index.ts                                # Barrel export
 ├── infrastructure/
-│   └── repositories/institution.prisma-repository.ts  # Implements interface using PrismaService
+│   ├── repositories/prisma-[entity].repository.ts  # Implements interface using PrismaService
+│   └── parsers/                                    # External-format adapters (optional)
 ├── presentation/
-│   └── controllers/institution.controller.ts       # HTTP layer, injects use cases
-└── institutions.module.ts                          # NestJS module wiring
+│   ├── controllers/[domain].controller.ts          # HTTP layer, injects use cases
+│   └── filters/[domain]-exception.filter.ts        # Maps domain errors to HTTP status codes
+└── [domain].module.ts                              # NestJS module wiring
 ```
 
 Then:
 1. Add the Prisma model in `prisma/schema.prisma`
-2. Run `pnpm prisma:migrate` to generate migration
+2. Run `pnpm prisma:migrate` to generate migration (if the dev DB state diverges, prefer writing the SQL by hand under `prisma/migrations/<timestamp>_<name>/migration.sql` and apply via `prisma migrate deploy`)
 3. Register the module in `src/app.module.ts`
 
 **Naming conventions (backend):**
-- Files: `kebab-case.suffix.ts` — e.g., `create-institution.use-case.ts`
-- Classes: `PascalCase` + suffix — e.g., `CreateInstitutionUseCase`, `InstitutionController`
-- Interfaces: Prefix with `I` — e.g., `IInstitutionRepository`
-- DTOs: `Create[Entity]Dto`, `Update[Entity]Dto`, `[Entity]ResponseDto`
-- Use cases: `[Verb][Entity]UseCase` — e.g., `CreateInstitutionUseCase`, `FindAllInstitutionsUseCase`
-- Repositories: `[Entity]PrismaRepository` (implementation), `I[Entity]Repository` (interface)
+- Files: `kebab-case.suffix.ts` — e.g., `confirm-import.use-case.ts`
+- Classes: `PascalCase` + suffix — e.g., `ConfirmImportUseCase`, `ProjectTrackingController`
+- Interfaces: Prefix with `I` — e.g., `IProjectImportRepository`
+- DTOs: `[Verb][Entity]Dto`, `[Entity]ResponseDto`
+- Use cases: `[Verb][Entity]UseCase`
+- Repositories: `Prisma[Entity]Repository` (implementation), `I[Entity]Repository` (interface); inject via string token defined alongside the interface
 
-**Wiring pattern:**
+**Wiring pattern (see `project-tracking.module.ts`):**
 ```typescript
+// Define the injection token next to the interface:
+export const PROJECT_IMPORT_REPOSITORY = 'IProjectImportRepository';
+
 // In the module, bind interface to implementation:
 {
-  provide: 'IInstitutionRepository',
-  useClass: InstitutionPrismaRepository,
+  provide: PROJECT_IMPORT_REPOSITORY,
+  useClass: PrismaProjectImportRepository,
 }
 
 // In use cases, inject by token:
 constructor(
-  @Inject('IInstitutionRepository')
-  private readonly institutionRepository: IInstitutionRepository,
+  @Inject(PROJECT_IMPORT_REPOSITORY)
+  private readonly importRepository: IProjectImportRepository,
 ) {}
-
-// In repository implementation, inject PrismaService:
-constructor(private readonly prisma: PrismaService) {}
 ```
 
-### Frontend — Adding a New Feature (e.g., "institutions")
+For file uploads, reuse `StorageModule` from `@shared/infrastructure/storage/` and inject `STORAGE_PROVIDER` — the new module just adds `imports: [StorageModule]`. For role-gated endpoints, apply `@UseGuards(RolesGuard)` at the controller and `@Roles('ADMINISTRATOR')` per handler.
 
-Each feature is a self-contained module under `src/features/`:
+### Frontend — Adding a New Feature (template: the existing `project-tracking` feature)
+
+Each feature is a self-contained module under `src/features/`. The reference implementation lives at `apps/web/src/features/project-tracking/`:
 
 ```
-src/features/institutions/
+src/features/[feature]/
 ├── components/
-│   ├── institution-list.tsx          # Feature-specific components
-│   ├── institution-card.tsx
-│   └── institution-form.tsx
+│   ├── [thing].tsx                   # Feature-specific components
+│   └── [other-thing].tsx
 ├── hooks/
-│   └── use-institutions.ts           # Feature-specific hooks
+│   ├── use-[thing].ts                # Custom hooks (useState/useEffect/useCallback — no React Query)
+│   └── use-[other-thing].ts
 ├── types/
-│   └── institution.types.ts          # Feature-specific types
+│   └── index.ts                      # Re-export shared contracts from @nhb-status-report/shared
 ├── pages/
-│   ├── institutions-page.tsx         # Route page components
-│   └── institution-detail-page.tsx
+│   ├── [feature]-page.tsx            # Route page components
+│   └── [feature]-detail-page.tsx
 └── index.ts                          # Public API barrel export
 ```
 
-Then register routes in `src/app/App.tsx`:
-```typescript
-<Route path="/institutions" element={<InstitutionsPage />} />
-<Route path="/institutions/:id" element={<InstitutionDetailPage />} />
-```
-
-And add API service in `src/services/`:
-```
-src/services/institution.service.ts   # All HTTP calls for this resource
-```
+Then register routes in `src/app/App.tsx`, gating Admin-only pages with `<RoleGuard allowedRoles={['ADMINISTRATOR']}>`. Add the API service in `src/services/[feature].service.ts` consuming `apiClient` (use `postFormData` for multipart uploads, `getBlob` for downloads).
 
 **Naming conventions (frontend):**
 - Files: `kebab-case.tsx` for components, `kebab-case.ts` for logic
-- Components: `PascalCase` named exports — e.g., `export function InstitutionList()`
-- Hooks: `use-` prefix in filename, `use` prefix in function — e.g., `useInstitutions()`
-- Pages: `[feature]-page.tsx` — e.g., `institutions-page.tsx`
-- Services: `[feature].service.ts` — e.g., `institution.service.ts`
-- Types: `[feature].types.ts`
+- Components: `PascalCase` named exports — e.g., `export function DashboardPage()`
+- Hooks: `use-` prefix in filename, `use` prefix in function — e.g., `useDashboard()`
+- Pages: `[feature]-page.tsx`
+- Services: `[feature].service.ts`
 
 **Component rules:**
 - Never put business logic in components — extract to hooks.
 - Never call API directly in components — use hooks that call services.
 - Pattern: `Page → Component → Hook → Service → API`
+- Add i18n keys under a top-level namespace per feature (e.g., `projectTracking.*`) in both `pt-BR.ts` and `en.ts`.
 
 ### Shared Types — When to Add
 
@@ -232,7 +229,7 @@ Add types to `packages/shared/src/types/` when:
 - The same shape is used by both frontend and backend (API contracts)
 - Creating a new resource? Add its response type here.
 
-Pattern: `[feature]-contracts.ts` — e.g., `institution-contracts.ts`
+Pattern: `[feature]-contracts.ts` — e.g., `project-tracking-contracts.ts`
 
 Always re-export from `packages/shared/src/index.ts`.
 

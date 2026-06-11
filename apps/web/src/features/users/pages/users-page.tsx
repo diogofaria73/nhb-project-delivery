@@ -67,10 +67,38 @@ export function UsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+        <p
+          style={{
+            fontSize: 11,
+            textTransform: 'uppercase',
+            letterSpacing: '.18em',
+            color: 'var(--hy-teal-bright)',
+            marginBottom: 6,
+            fontWeight: 600,
+          }}
+        >
+          Administração
+        </p>
+        <h1
+          className="hy-display"
+          style={{
+            fontSize: 32,
+            margin: 0,
+            color: 'var(--hy-ink)',
+            letterSpacing: '-0.01em',
+            lineHeight: 1.05,
+          }}
+        >
           {t('users.title')}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p
+          style={{
+            marginTop: 8,
+            fontSize: 13.5,
+            color: 'var(--hy-ink-dim)',
+            lineHeight: 1.5,
+          }}
+        >
           {t('users.description')}
         </p>
       </div>
