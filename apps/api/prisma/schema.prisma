@@ -59,6 +59,7 @@ model ProjectImport {
   parseReport      Json                @map("parse_report")
   rowsAccepted     Int                 @default(0) @map("rows_accepted")
   rowsRejected     Int                 @default(0) @map("rows_rejected")
+  annualConsolidatedPercent Float?     @map("annual_consolidated_percent")
   importedById     String              @map("imported_by_id")
   importedAt       DateTime            @default(now()) @map("imported_at")
 

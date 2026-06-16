@@ -57,20 +57,6 @@ export function cumulativePercentForAverages(
   return cumulativePercentForTable(flags, weekN);
 }
 
-/** Average of cumulativePercentForAverages across visible projects. (BR-69) */
-export function kpiAcumuladoAnual(
-  visibleProjects: ProjectRowDto[],
-  weekN: number,
-): number {
-  if (visibleProjects.length === 0) return 0;
-  let sum = 0;
-  for (const p of visibleProjects) {
-    const flags = decodeWeekFlags(p.weekFlagsBase64);
-    sum += cumulativePercentForAverages(flags, weekN, p.projectStatus);
-  }
-  return sum / visibleProjects.length;
-}
-
 /** % of visible projects with bit weekN set. (BR-70) */
 export function kpiSemanaCorrente(
   visibleProjects: ProjectRowDto[],

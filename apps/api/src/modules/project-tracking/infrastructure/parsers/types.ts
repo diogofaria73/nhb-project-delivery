@@ -27,6 +27,7 @@ export interface ParseResult {
   rejectedRows: ParseRowError[];
   errorsTruncated: boolean;
   biSanity: BiSanityDiff;
+  annualConsolidatedPercent: number | null;
   preview: ParsePreviewRow[];
 }
 

@@ -13,6 +13,7 @@ export interface ProjectImportRecord {
   parseReport: unknown;
   rowsAccepted: number;
   rowsRejected: number;
+  annualConsolidatedPercent: number | null;
   importedById: string;
   importedByName: string;
   importedAt: Date;

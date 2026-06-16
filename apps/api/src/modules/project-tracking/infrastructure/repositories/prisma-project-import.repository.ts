@@ -74,6 +74,7 @@ export class PrismaProjectImportRepository implements IProjectImportRepository {
     parseReport: unknown;
     rowsAccepted: number;
     rowsRejected: number;
+    annualConsolidatedPercent: number | null;
     importedById: string;
     importedAt: Date;
     importedBy: { name: string } | null;
@@ -89,6 +90,7 @@ export class PrismaProjectImportRepository implements IProjectImportRepository {
       parseReport: row.parseReport,
       rowsAccepted: row.rowsAccepted,
       rowsRejected: row.rowsRejected,
+      annualConsolidatedPercent: row.annualConsolidatedPercent,
       importedById: row.importedById,
       importedByName: row.importedBy?.name ?? 'Unknown',
       importedAt: row.importedAt,

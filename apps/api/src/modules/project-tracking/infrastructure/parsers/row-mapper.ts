@@ -43,13 +43,17 @@ export function mapRow(
   rowNumber: number,
   layout: ColumnLayout,
 ): AcceptedRow | RowMapError {
-  const projectId = readString(row.getCell(layout.projectId));
+  const rawProjectId = readString(row.getCell(layout.projectId));
   const projectName = readString(row.getCell(layout.projectName));
   const rawStatus = readString(row.getCell(layout.projectStatus));
 
-  if (!projectId) return { reason: 'Project ID is empty' };
   if (!projectName) return { reason: 'Project Name is empty' };
   if (!rawStatus) return { reason: 'Status Projeto is empty' };
+
+  // BR: when Project ID is empty, fall back to Project Name as the identifier.
+  // Next import that brings a real Project ID will be matched back to this
+  // row by name in the delta calculator.
+  const projectId = rawProjectId ?? projectName;
 
   let projectStatus;
   try {

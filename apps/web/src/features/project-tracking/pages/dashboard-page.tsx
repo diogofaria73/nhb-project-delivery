@@ -14,7 +14,6 @@ import {
 import {
   donutCounts,
   hasSubmissionsInRange,
-  kpiAcumuladoAnual,
   kpiSemanaCorrente,
   byManager,
   weeklyStats,
@@ -101,10 +100,7 @@ function DashboardContent({
     [visibleProjects, filters.donutFocus],
   );
 
-  const acumuladoAnual = useMemo(
-    () => kpiAcumuladoAnual(visibleProjects, filters.weekN),
-    [visibleProjects, filters.weekN],
-  );
+  const acumuladoAnual = data.annualConsolidated.percent ?? 0;
 
   const semanaCorrente = useMemo(
     () => kpiSemanaCorrente(visibleProjects, filters.weekN),

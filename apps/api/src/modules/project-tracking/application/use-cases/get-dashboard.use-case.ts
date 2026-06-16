@@ -136,7 +136,7 @@ export class GetDashboardUseCase {
       annualConsolidated: {
         weeksSent: weeksSentTotal,
         weeksExpected: weeksExpectedTotal,
-        percent: this.safePercent(weeksSentTotal, weeksExpectedTotal),
+        percent: active.annualConsolidatedPercent,
       },
       weeklyBars,
       projects,

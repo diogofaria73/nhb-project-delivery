@@ -96,6 +96,7 @@ export async function parseSpreadsheet(
   }
 
   const biSanity = computeBiSanity(biSheet, acceptedRows);
+  const annualConsolidatedPercent = readAnnualConsolidatedPercent(biSheet);
 
   const preview: ParsePreviewRow[] = acceptedRows.slice(0, 10).map((row) => ({
     projectId: row.projectId,
@@ -114,6 +115,7 @@ export async function parseSpreadsheet(
     rejectedRows,
     errorsTruncated,
     biSanity,
+    annualConsolidatedPercent,
     preview,
   };
 
@@ -133,6 +135,28 @@ function isRowEmpty(row: ExcelJS.Row, layout: ColumnLayout): boolean {
     (projectId === null || projectId === undefined || projectId === '') &&
     (projectName === null || projectName === undefined || projectName === '')
   );
+}
+
+// Reads the "Consolidado Anual" portfolio percent from BI!L2.
+// Excel may store percents as fractional (0.85) or already-scaled (85);
+// values ≤ 1 are treated as fractions and normalized to 0..100.
+function readAnnualConsolidatedPercent(
+  biSheet: ExcelJS.Worksheet | undefined,
+): number | null {
+  if (!biSheet) return null;
+  const raw = biSheet.getCell('L2').value;
+  let n: number | null = null;
+  if (typeof raw === 'number') n = raw;
+  else if (typeof raw === 'string' && raw.trim() !== '') {
+    const parsed = Number(raw.replace('%', '').trim());
+    if (Number.isFinite(parsed)) n = parsed;
+  } else if (raw && typeof raw === 'object' && 'result' in raw) {
+    const r = (raw as { result: unknown }).result;
+    if (typeof r === 'number') n = r;
+  }
+  if (n === null || !Number.isFinite(n)) return null;
+  const scaled = Math.abs(n) <= 1 ? n * 100 : n;
+  return Math.round(scaled * 100) / 100;
 }
 
 function resolveLayout(sheet: ExcelJS.Worksheet): ColumnLayout {

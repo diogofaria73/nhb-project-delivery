@@ -120,6 +120,7 @@ export class ConfirmImportUseCase {
             parseReport: parseReport as unknown as object,
             rowsAccepted: parseResult.acceptedRows.length,
             rowsRejected: parseResult.rejectedRows.length,
+            annualConsolidatedPercent: parseResult.annualConsolidatedPercent,
             importedById: input.importedById,
           },
         });
