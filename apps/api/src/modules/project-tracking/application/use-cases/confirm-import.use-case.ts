@@ -83,8 +83,7 @@ export class ConfirmImportUseCase {
     );
 
     const importId = randomUUID();
-    const storageKey = `project-imports/${input.referenceYear}/${importId}.xlsx`;
-    await this.storage.save(
+    const { storageKey } = await this.storage.save(
       input.buffer,
       `${importId}.xlsx`,
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
