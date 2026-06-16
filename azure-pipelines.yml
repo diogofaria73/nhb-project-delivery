@@ -1,24 +1,92 @@
 # ──────────────────────────────────────────────────────────────────────
 # Azure DevOps Pipeline — NHB Project Delivery
 #
-# Cheapest viable deploy:
-#   - Docker Hub (free) as registry
-#   - Azure Container Apps (Consumption plan, free tier)
-#   - Azure Database for PostgreSQL Flexible Server, Burstable B1ms
+# Deploy-only pipeline (no infra provisioning).
 #
-# Required Service Connections (Project Settings → Service connections):
-#   - dockerhub        → Docker Registry (Docker Hub)
-#   - azure-sub        → Azure Resource Manager (subscription scoped)
+# Stack:
+#   - Registry: Azure Container Registry (ACR)
+#   - Compute:  Azure Container Apps
+#   - DB:       Azure Database for PostgreSQL Flexible Server (managed)
+#   - Storage:  Azure Files share mounted at /app/storage on the Container App
 #
-# Required Variable Group (Library → Variable group named "nhb-prod"):
-#   - DOCKERHUB_NAMESPACE      (e.g. your Docker Hub username)
-#   - AZURE_RESOURCE_GROUP     (e.g. rg-nhb-prod)
-#   - AZURE_LOCATION           (e.g. brazilsouth)
-#   - CONTAINER_APP_NAME       (e.g. nhb-api)
-#   - CONTAINER_APP_ENV        (e.g. cae-nhb-prod)
-#   - DATABASE_URL             (secret — full Postgres connection string)
-#   - JWT_SECRET               (secret — long random string)
-#   - CORS_ORIGIN              (e.g. https://nhb-api.<region>.azurecontainerapps.io)
+# ── Required service connections (Project Settings → Service connections) ──
+#   - acr-connection   → "Docker Registry" of type "Azure Container Registry"
+#                        pointing to the ACR below.
+#   - azure-sub        → "Azure Resource Manager" service connection scoped
+#                        to the subscription / resource group hosting the
+#                        Container App.
+#
+# ── Required variable group (Library → Variable group "nhb-prod") ──
+#   - ACR_NAME                  e.g. nhbprodacr           (without .azurecr.io)
+#   - ACR_LOGIN_SERVER          e.g. nhbprodacr.azurecr.io
+#   - AZURE_RESOURCE_GROUP      e.g. rg-nhb-prod
+#   - CONTAINER_APP_NAME        e.g. nhb-app
+#   - CONTAINER_APP_ENV         e.g. cae-nhb-prod
+#   - CORS_ORIGIN               e.g. https://nhb.example.com
+#   - DATABASE_URL  (secret)    postgresql://user:pass@host:5432/db?sslmode=require
+#   - JWT_SECRET    (secret)    long random string
+#
+# ── One-time infra setup (run manually before the first pipeline run) ─────
+# The pipeline does NOT create resources. Provision once:
+#
+#   # 1. Resource group, ACR, Container Apps environment
+#   az group create -n rg-nhb-prod -l brazilsouth
+#   az acr create   -n nhbprodacr  -g rg-nhb-prod --sku Basic --admin-enabled true
+#   az containerapp env create -n cae-nhb-prod -g rg-nhb-prod -l brazilsouth
+#
+#   # 2. Managed Postgres + DB
+#   az postgres flexible-server create \
+#     -n nhb-pg-prod -g rg-nhb-prod -l brazilsouth \
+#     --tier Burstable --sku-name Standard_B1ms --version 16 \
+#     --admin-user nhbadmin --admin-password '<strong>' \
+#     --public-access 0.0.0.0
+#   az postgres flexible-server db create -g rg-nhb-prod -s nhb-pg-prod -d nhb_status_report
+#
+#   # 3. Storage account + file share for the /app/storage volume
+#   az storage account create -n nhbprodstg -g rg-nhb-prod -l brazilsouth \
+#     --sku Standard_LRS --kind StorageV2
+#   az storage share-rm create --resource-group rg-nhb-prod \
+#     --storage-account nhbprodstg --name nhb-uploads --quota 50
+#
+#   # 4. Register the file share as a volume on the Container Apps environment
+#   STG_KEY=$(az storage account keys list -g rg-nhb-prod -n nhbprodstg \
+#     --query "[0].value" -o tsv)
+#   az containerapp env storage set \
+#     -n cae-nhb-prod -g rg-nhb-prod \
+#     --storage-name nhb-uploads \
+#     --azure-file-account-name nhbprodstg \
+#     --azure-file-account-key "$STG_KEY" \
+#     --azure-file-share-name nhb-uploads \
+#     --access-mode ReadWrite
+#
+#   # 5. Create the Container App with the volume mount
+#   az containerapp create \
+#     -n nhb-app -g rg-nhb-prod --environment cae-nhb-prod \
+#     --image nhbprodacr.azurecr.io/nhb-project-delivery:latest \
+#     --registry-server nhbprodacr.azurecr.io \
+#     --registry-identity system \
+#     --target-port 3000 --ingress external \
+#     --min-replicas 1 --max-replicas 3 \
+#     --cpu 0.5 --memory 1.0Gi
+#
+#   # 6. Add the secret refs and the volume mount via YAML patch
+#   az containerapp secret set -n nhb-app -g rg-nhb-prod \
+#     --secrets database-url='<DATABASE_URL>' jwt-secret='<JWT_SECRET>'
+#
+#   # Volume mount must be added via revision YAML — example fragment:
+#   #   volumes:
+#   #     - name: storage
+#   #       storageType: AzureFile
+#   #       storageName: nhb-uploads
+#   #   containers:
+#   #     - name: nhb-app
+#   #       volumeMounts:
+#   #         - volumeName: storage
+#   #           mountPath: /app/storage
+#   az containerapp update -n nhb-app -g rg-nhb-prod --yaml app-revision.yaml
+#
+# After the one-time setup, the pipeline below handles every subsequent
+# release: build → push to ACR → swap image + env vars → smoke test.
 # ──────────────────────────────────────────────────────────────────────
 
 trigger:
@@ -38,7 +106,7 @@ variables:
 stages:
   # ──────────────────────────────────────────────────────────────────
   - stage: BuildAndPush
-    displayName: Build & push image
+    displayName: Build & push image to ACR
     jobs:
       - job: docker
         displayName: Docker build & push
@@ -46,16 +114,11 @@ stages:
           vmImage: ubuntu-latest
         steps:
           - task: Docker@2
-            displayName: Login to Docker Hub
-            inputs:
-              command: login
-              containerRegistry: dockerhub
-
-          - task: Docker@2
-            displayName: Build & push image
+            displayName: Build & push to ACR
             inputs:
               command: buildAndPush
-              repository: $(DOCKERHUB_NAMESPACE)/$(IMAGE_NAME)
+              containerRegistry: acr-connection
+              repository: $(IMAGE_NAME)
               dockerfile: Dockerfile
               buildContext: .
               tags: |
@@ -78,7 +141,7 @@ stages:
             deploy:
               steps:
                 - task: AzureCLI@2
-                  displayName: Update Container App image & secrets
+                  displayName: Update Container App image & env vars
                   inputs:
                     azureSubscription: azure-sub
                     scriptType: bash
@@ -86,10 +149,12 @@ stages:
                     inlineScript: |
                       set -euo pipefail
 
-                      IMAGE="docker.io/$(DOCKERHUB_NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)"
-
+                      IMAGE="$(ACR_LOGIN_SERVER)/$(IMAGE_NAME):$(IMAGE_TAG)"
                       echo "Updating $(CONTAINER_APP_NAME) → $IMAGE"
 
+                      # Secrets must already exist on the Container App
+                      # (created during the one-time setup). The pipeline
+                      # only references them via secretref.
                       az containerapp update \
                         --name "$(CONTAINER_APP_NAME)" \
                         --resource-group "$(AZURE_RESOURCE_GROUP)" \
@@ -104,7 +169,7 @@ stages:
                           JWT_SECRET=secretref:jwt-secret
 
                 - task: AzureCLI@2
-                  displayName: Health check
+                  displayName: Smoke test
                   inputs:
                     azureSubscription: azure-sub
                     scriptType: bash
@@ -117,8 +182,6 @@ stages:
                         --resource-group "$(AZURE_RESOURCE_GROUP)" \
                         --query properties.configuration.ingress.fqdn -o tsv)
 
-                      # No dedicated /api/health endpoint yet — probe the root,
-                      # which serves the SPA index.html once the API is up.
                       echo "Probing https://$FQDN/"
 
                       for i in {1..20}; do
