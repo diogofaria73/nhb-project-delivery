@@ -1,0 +1,134 @@
+# ──────────────────────────────────────────────────────────────────────
+# Azure DevOps Pipeline — NHB Project Delivery
+#
+# Cheapest viable deploy:
+#   - Docker Hub (free) as registry
+#   - Azure Container Apps (Consumption plan, free tier)
+#   - Azure Database for PostgreSQL Flexible Server, Burstable B1ms
+#
+# Required Service Connections (Project Settings → Service connections):
+#   - dockerhub        → Docker Registry (Docker Hub)
+#   - azure-sub        → Azure Resource Manager (subscription scoped)
+#
+# Required Variable Group (Library → Variable group named "nhb-prod"):
+#   - DOCKERHUB_NAMESPACE      (e.g. your Docker Hub username)
+#   - AZURE_RESOURCE_GROUP     (e.g. rg-nhb-prod)
+#   - AZURE_LOCATION           (e.g. brazilsouth)
+#   - CONTAINER_APP_NAME       (e.g. nhb-api)
+#   - CONTAINER_APP_ENV        (e.g. cae-nhb-prod)
+#   - DATABASE_URL             (secret — full Postgres connection string)
+#   - JWT_SECRET               (secret — long random string)
+#   - CORS_ORIGIN              (e.g. https://nhb-api.<region>.azurecontainerapps.io)
+# ──────────────────────────────────────────────────────────────────────
+
+trigger:
+  branches:
+    include:
+      - main
+
+pr: none
+
+variables:
+  - group: nhb-prod
+  - name: IMAGE_NAME
+    value: nhb-project-delivery
+  - name: IMAGE_TAG
+    value: $(Build.BuildId)
+
+stages:
+  # ──────────────────────────────────────────────────────────────────
+  - stage: BuildAndPush
+    displayName: Build & push image
+    jobs:
+      - job: docker
+        displayName: Docker build & push
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: Docker@2
+            displayName: Login to Docker Hub
+            inputs:
+              command: login
+              containerRegistry: dockerhub
+
+          - task: Docker@2
+            displayName: Build & push image
+            inputs:
+              command: buildAndPush
+              repository: $(DOCKERHUB_NAMESPACE)/$(IMAGE_NAME)
+              dockerfile: Dockerfile
+              buildContext: .
+              tags: |
+                $(IMAGE_TAG)
+                latest
+
+  # ──────────────────────────────────────────────────────────────────
+  - stage: Deploy
+    displayName: Deploy to Container Apps
+    dependsOn: BuildAndPush
+    condition: succeeded()
+    jobs:
+      - deployment: containerApps
+        displayName: Update Container App revision
+        pool:
+          vmImage: ubuntu-latest
+        environment: nhb-prod
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureCLI@2
+                  displayName: Update Container App image & secrets
+                  inputs:
+                    azureSubscription: azure-sub
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+
+                      IMAGE="docker.io/$(DOCKERHUB_NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)"
+
+                      echo "Updating $(CONTAINER_APP_NAME) → $IMAGE"
+
+                      az containerapp update \
+                        --name "$(CONTAINER_APP_NAME)" \
+                        --resource-group "$(AZURE_RESOURCE_GROUP)" \
+                        --image "$IMAGE" \
+                        --set-env-vars \
+                          NODE_ENV=production \
+                          PORT=3000 \
+                          STORAGE_DRIVER=local \
+                          STORAGE_LOCAL_PATH=/app/storage \
+                          CORS_ORIGIN="$(CORS_ORIGIN)" \
+                          DATABASE_URL=secretref:database-url \
+                          JWT_SECRET=secretref:jwt-secret
+
+                - task: AzureCLI@2
+                  displayName: Health check
+                  inputs:
+                    azureSubscription: azure-sub
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+
+                      FQDN=$(az containerapp show \
+                        --name "$(CONTAINER_APP_NAME)" \
+                        --resource-group "$(AZURE_RESOURCE_GROUP)" \
+                        --query properties.configuration.ingress.fqdn -o tsv)
+
+                      # No dedicated /api/health endpoint yet — probe the root,
+                      # which serves the SPA index.html once the API is up.
+                      echo "Probing https://$FQDN/"
+
+                      for i in {1..20}; do
+                        if curl -fsS "https://$FQDN/" >/dev/null; then
+                          echo "App is healthy."
+                          exit 0
+                        fi
+                        echo "Attempt $i failed, retrying in 6s..."
+                        sleep 6
+                      done
+
+                      echo "Health check failed after 20 attempts."
+                      exit 1
