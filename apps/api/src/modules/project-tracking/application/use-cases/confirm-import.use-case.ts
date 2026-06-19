@@ -100,6 +100,8 @@ export class ConfirmImportUseCase {
       rowsRejected: parseResult.rejectedRows.length,
       errors: parseResult.rejectedRows,
       errorsTruncated: parseResult.errorsTruncated,
+      skippedRows: parseResult.skippedRows,
+      skippedRowsTruncated: parseResult.skippedRowsTruncated,
       biSanity: parseResult.biSanity,
       delta,
       preview: parseResult.preview,

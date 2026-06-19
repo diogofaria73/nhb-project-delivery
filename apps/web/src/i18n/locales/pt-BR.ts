@@ -693,6 +693,7 @@ export const ptBR = {
         delta: 'Delta vs anterior',
         bi: 'Sanity BI',
         errors: 'Erros',
+        skipped: 'Puladas',
       },
       summary: {
         rowsRead: 'Linhas lidas',
@@ -719,6 +720,14 @@ export const ptBR = {
         truncated: 'Mostrando apenas os primeiros 200 erros.',
         extension: 'Apenas arquivos .xlsx são aceitos.',
         size: 'Arquivo excede o limite de 10 MB.',
+      },
+      skipped: {
+        none: 'Nenhuma linha pulada.',
+        rule: 'Linhas são puladas quando as colunas "Project ID" e "Project Name" estão ambas vazias. Não é um erro — costuma ser uma linha em branco de espaçamento ou um cabeçalho secundário.',
+        truncated: 'Mostrando apenas as primeiras 200 linhas puladas.',
+        noDetail: 'Sem detalhes disponíveis ({{count}} linhas — import antigo).',
+        fullyEmpty: 'linha completamente vazia',
+        idAndNameEmpty: 'sem Project ID e sem Project Name, mas outras colunas têm conteúdo:',
       },
     },
     history: {
@@ -844,6 +853,7 @@ export const ptBR = {
       panelTitle: 'DETALHAMENTO POR PROJETO',
       subtitleN: '{{n}} projetos',
       subtitleFiltered: 'filtrado por · {{shown}} de {{total}}',
+      statusFilter: 'STATUS',
       emptyMatch: 'Nenhum projeto bate com os filtros.',
       col: {
         project: 'Projeto',
@@ -866,6 +876,41 @@ export const ptBR = {
       title: 'Nenhum envio registrado em {{month}}',
       hint: 'Os indicadores ficam em zero porque nenhum projeto enviou status nas semanas desse mês. Tente outro mês ou volte para a visão anual.',
       action: 'Limpar filtro',
+    },
+    info: {
+      ariaLabel: 'Como este indicador é calculado',
+      formulaLabel: 'Fórmula',
+      descriptionLabel: 'O que isso significa',
+      acumuladoAnual: {
+        formula: 'média( % de envios acumulados por projeto ativo até a semana selecionada )',
+        description:
+          'Para cada projeto ativo, calculamos quantas semanas o status foi enviado até a semana corrente, dividido pelo número de semanas. O indicador é a média dessas porcentagens. Projetos não ativos contam como 0 para não inflar o resultado.',
+      },
+      semanaCorrente: {
+        formula: 'reports enviados na semana / total de projetos ativos',
+        description:
+          'Mostra o percentual de projetos ativos que enviaram o status report na semana selecionada. Projetos não ativos (concluídos, em hold, etc.) não entram no cálculo.',
+      },
+      donut: {
+        formula: 'contagem de projetos por status (após filtros)',
+        description:
+          'Distribuição dos projetos visíveis agrupados por status. Clique em uma fatia para filtrar a tabela abaixo por aquele status específico.',
+      },
+      manager: {
+        formula: 'por gerente: média( % acumulado de envios dos projetos ativos )',
+        description:
+          'Agrupa os projetos pelo gerente responsável (PM) e mostra a média do percentual acumulado de envios até a semana selecionada. Projetos não ativos contam como 0 na média. Gerentes sem nenhum envio são omitidos.',
+      },
+      weekly: {
+        formula: 'por semana: reports enviados / total de projetos ativos',
+        description:
+          'Mostra, semana a semana, o percentual de projetos ativos que enviaram status naquela semana. A linha de referência marca a meta de 85%.',
+      },
+      table: {
+        formula: 'por projeto: semanas com envio / semana corrente',
+        description:
+          'Lista cada projeto com seu status, se enviou o report na semana corrente e o percentual acumulado de envios até a semana selecionada. Por padrão mostra apenas projetos ativos — use o filtro de status no topo da tabela para incluir outros estados.',
+      },
     },
   },
 };

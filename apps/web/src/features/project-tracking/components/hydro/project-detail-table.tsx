@@ -10,6 +10,8 @@ import {
 import { canonicalStatusIndex, STATUS_COLORS, withAlpha } from './status-meta';
 import { StatusPill } from './status-pill';
 import { ProgressMini } from './progress-mini';
+import { StatusMultiSelect } from './status-multi-select';
+import { InfoTooltip } from './info-tooltip';
 
 type SortKey = 'name' | 'status' | 'sentThisWeek' | 'cumulative';
 type SortDir = 'asc' | 'desc';
@@ -30,6 +32,13 @@ interface Row {
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const DEFAULT_PAGE_SIZE = 15;
+const ALL_STATUSES: readonly ProjectStatus[] = [
+  'ACTIVE',
+  'COMPLETED',
+  'ON_HOLD',
+  'NOT_STARTED',
+  'CANCELLED',
+];
 
 export function ProjectDetailTable({
   projects,
@@ -43,10 +52,21 @@ export function ProjectDetailTable({
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
   const [page, setPage] = useState(1);
+  const [tableStatuses, setTableStatuses] = useState<Set<ProjectStatus>>(
+    () => new Set<ProjectStatus>(['ACTIVE']),
+  );
+
+  const statusFilteredProjects = useMemo(
+    () =>
+      donutFocus
+        ? projects
+        : projects.filter((p) => tableStatuses.has(p.projectStatus)),
+    [projects, tableStatuses, donutFocus],
+  );
 
   const rows: Row[] = useMemo(
     () =>
-      projects.map((p) => {
+      statusFilteredProjects.map((p) => {
         const flags = decodeWeekFlags(p.weekFlagsBase64);
         return {
           project: p,
@@ -54,8 +74,32 @@ export function ProjectDetailTable({
           sentThisWeek: flags[weekN - 1] ?? false,
         };
       }),
-    [projects, weekN],
+    [statusFilteredProjects, weekN],
   );
+
+  const toggleTableStatus = (status: ProjectStatus) => {
+    setTableStatuses((prev) => {
+      const next = new Set(prev);
+      if (next.has(status)) {
+        if (next.size <= 1) return prev;
+        next.delete(status);
+      } else {
+        next.add(status);
+      }
+      return next;
+    });
+    setPage(1);
+  };
+
+  const selectAllTableStatuses = () => {
+    setTableStatuses(new Set(ALL_STATUSES));
+    setPage(1);
+  };
+
+  const clearTableStatuses = () => {
+    setTableStatuses(new Set<ProjectStatus>(['ACTIVE']));
+    setPage(1);
+  };
 
   const sorted = useMemo(() => {
     const arr = [...rows];
@@ -162,16 +206,45 @@ export function ProjectDetailTable({
         }}
       >
         <div>
-          <div className="hy-panel-title">{t('dashboard.table.panelTitle')}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div className="hy-panel-title">{t('dashboard.table.panelTitle')}</div>
+            <InfoTooltip
+              title={t('dashboard.table.panelTitle')}
+              formula={t('dashboard.info.table.formula')}
+              description={t('dashboard.info.table.description')}
+            />
+          </div>
           <div className="hy-panel-subtitle">{subtitleEl}</div>
         </div>
-        <PageSizeSelector
-          value={pageSize}
-          onChange={(v) => {
-            setPageSize(v);
-            setPage(1);
-          }}
-        />
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          {!donutFocus && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <span
+                style={{
+                  fontSize: 11.5,
+                  color: 'var(--hy-ink-dim)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '.1em',
+                }}
+              >
+                {t('dashboard.table.statusFilter')}
+              </span>
+              <StatusMultiSelect
+                selected={tableStatuses}
+                onToggle={toggleTableStatus}
+                onSelectAll={selectAllTableStatuses}
+                onClearAll={clearTableStatuses}
+              />
+            </div>
+          )}
+          <PageSizeSelector
+            value={pageSize}
+            onChange={(v) => {
+              setPageSize(v);
+              setPage(1);
+            }}
+          />
+        </div>
       </div>
 
       <div className="hy-panel-body" style={{ padding: 0 }}>

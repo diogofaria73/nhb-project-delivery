@@ -57,18 +57,25 @@ export function cumulativePercentForAverages(
   return cumulativePercentForTable(flags, weekN);
 }
 
-/** % of visible projects with bit weekN set. (BR-70) */
+/**
+ * % of ACTIVE projects (within the visible set) with bit weekN set.
+ * Denominator = number of active projects; numerator = active projects that submitted in weekN.
+ */
 export function kpiSemanaCorrente(
   visibleProjects: ProjectRowDto[],
   weekN: number,
 ): number {
-  if (visibleProjects.length === 0 || weekN <= 0) return 0;
+  if (weekN <= 0) return 0;
+  const activeProjects = visibleProjects.filter(
+    (p) => p.projectStatus === 'ACTIVE',
+  );
+  if (activeProjects.length === 0) return 0;
   let sent = 0;
-  for (const p of visibleProjects) {
+  for (const p of activeProjects) {
     const flags = decodeWeekFlags(p.weekFlagsBase64);
     if (flags[weekN - 1]) sent++;
   }
-  return (sent / visibleProjects.length) * 100;
+  return (sent / activeProjects.length) * 100;
 }
 
 /** Counts of visible projects by status. (BR-71) */
@@ -107,18 +114,24 @@ export function weeklyPercents(
   return result;
 }
 
-/** Like `weeklyPercents` but returns both the count and the percent per week. */
+/**
+ * Per-week submissions among ACTIVE projects (within the visible set).
+ * Denominator = active projects; numerator = active projects that submitted that week.
+ */
 export function weeklyStats(
   visibleProjects: ProjectRowDto[],
   untilWeek: number,
 ): Array<{ sent: number; total: number; percent: number }> {
-  const total = visibleProjects.length;
+  const activeProjects = visibleProjects.filter(
+    (p) => p.projectStatus === 'ACTIVE',
+  );
+  const total = activeProjects.length;
   if (untilWeek <= 0 || total === 0) {
     return new Array(Math.max(0, untilWeek))
       .fill(null)
       .map(() => ({ sent: 0, total, percent: 0 }));
   }
-  const decoded = visibleProjects.map((p) => decodeWeekFlags(p.weekFlagsBase64));
+  const decoded = activeProjects.map((p) => decodeWeekFlags(p.weekFlagsBase64));
   const result: Array<{ sent: number; total: number; percent: number }> = [];
   for (let w = 1; w <= untilWeek; w++) {
     let sent = 0;

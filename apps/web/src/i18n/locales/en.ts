@@ -693,6 +693,7 @@ export const en = {
         delta: 'Delta vs. previous',
         bi: 'BI sanity',
         errors: 'Errors',
+        skipped: 'Skipped',
       },
       summary: {
         rowsRead: 'Rows read',
@@ -719,6 +720,14 @@ export const en = {
         truncated: 'Showing the first 200 errors only.',
         extension: 'Only .xlsx files are accepted.',
         size: 'File exceeds the 10 MB limit.',
+      },
+      skipped: {
+        none: 'No skipped rows.',
+        rule: 'Rows are skipped when both "Project ID" and "Project Name" columns are empty. This is not an error — it usually means a spacer row or a secondary header.',
+        truncated: 'Showing the first 200 skipped rows only.',
+        noDetail: 'No details available ({{count}} rows — legacy import).',
+        fullyEmpty: 'fully empty row',
+        idAndNameEmpty: 'no Project ID and no Project Name, but other columns have content:',
       },
     },
     history: {
@@ -824,6 +833,7 @@ export const en = {
       panelTitle: 'PROJECT DETAILS',
       subtitleN: '{{n}} projects',
       subtitleFiltered: 'filtered · {{shown}} of {{total}}',
+      statusFilter: 'STATUS',
       emptyMatch: 'No projects match the current filters.',
       col: {
         project: 'Project',
@@ -846,6 +856,41 @@ export const en = {
       title: 'No submissions recorded in {{month}}',
       hint: 'The indicators are zero because no project sent status during the weeks of this month. Try a different month or go back to the year view.',
       action: 'Clear filter',
+    },
+    info: {
+      ariaLabel: 'How this indicator is calculated',
+      formulaLabel: 'Formula',
+      descriptionLabel: 'What it means',
+      acumuladoAnual: {
+        formula: 'average( cumulative % of submissions per active project up to the selected week )',
+        description:
+          'For each active project, we count the weeks the status was sent up to the current week and divide by the number of weeks. The KPI is the average of those percentages. Non-active projects count as 0 so they do not inflate the result.',
+      },
+      semanaCorrente: {
+        formula: 'reports sent this week / total active projects',
+        description:
+          'Percentage of active projects that submitted the status report in the selected week. Non-active projects (completed, on hold, etc.) are not part of the calculation.',
+      },
+      donut: {
+        formula: 'count of projects per status (after filters)',
+        description:
+          'Distribution of the currently visible projects grouped by status. Click a slice to filter the table below by that specific status.',
+      },
+      manager: {
+        formula: 'per manager: average( cumulative % of submissions for active projects )',
+        description:
+          'Groups projects by their responsible manager (PM) and shows the average cumulative submission percentage up to the selected week. Non-active projects count as 0 in the average. Managers with no submissions are omitted.',
+      },
+      weekly: {
+        formula: 'per week: reports sent / total active projects',
+        description:
+          'Shows, week by week, the percentage of active projects that sent a status report that week. The reference line marks the 85% target.',
+      },
+      table: {
+        formula: 'per project: weeks with submission / current week',
+        description:
+          'Lists each project with its status, whether it sent the report in the current week and the cumulative submission percentage up to the selected week. By default it shows only active projects — use the status filter at the top of the table to include other states.',
+      },
     },
   },
 };

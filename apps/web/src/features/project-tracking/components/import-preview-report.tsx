@@ -32,6 +32,9 @@ export function ImportPreviewReport({ report }: ImportPreviewReportProps) {
         <TabsTrigger value="errors">
           {t('projectTracking.import.tabs.errors')} ({report.rowsRejected})
         </TabsTrigger>
+        <TabsTrigger value="skipped">
+          {t('projectTracking.import.tabs.skipped')} ({report.rowsSkipped})
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="summary" className="space-y-3">
@@ -64,6 +67,10 @@ export function ImportPreviewReport({ report }: ImportPreviewReportProps) {
             ))}
           </ul>
         )}
+      </TabsContent>
+
+      <TabsContent value="skipped" className="space-y-3">
+        <SkippedPanel report={report} />
       </TabsContent>
 
       <TabsContent value="errors" className="space-y-3">
@@ -217,6 +224,75 @@ function DeltaSection({ title, items }: { title: string; items: string[] }) {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function SkippedPanel({ report }: { report: ParseReportDto }) {
+  const { t } = useTranslation();
+  const skippedRows = report.skippedRows ?? [];
+  const skippedRowsTruncated = report.skippedRowsTruncated ?? false;
+
+  if (report.rowsSkipped === 0) {
+    return (
+      <p className="text-sm text-emerald-700 dark:text-emerald-300">
+        {t('projectTracking.import.skipped.none')}
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">
+        {t('projectTracking.import.skipped.rule')}
+      </p>
+      {skippedRowsTruncated && (
+        <p className="text-xs text-muted-foreground">
+          {t('projectTracking.import.skipped.truncated')}
+        </p>
+      )}
+      {skippedRows.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          {t('projectTracking.import.skipped.noDetail', {
+            count: report.rowsSkipped,
+          })}
+        </p>
+      ) : (
+        <ul className="space-y-1.5 text-sm">
+          {skippedRows.map((row) => (
+            <li
+              key={row.rowNumber}
+              className="rounded border-l-2 border-amber-500 bg-amber-500/10 px-2 py-1.5"
+            >
+              <div className="flex items-baseline gap-2">
+                <span className="font-mono text-xs text-muted-foreground">
+                  L{row.rowNumber}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {row.sampleCells.length === 0
+                    ? t('projectTracking.import.skipped.fullyEmpty')
+                    : t('projectTracking.import.skipped.idAndNameEmpty')}
+                </span>
+              </div>
+              {row.sampleCells.length > 0 && (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {row.sampleCells.map((c, i) => (
+                    <span
+                      key={i}
+                      className="inline-flex max-w-full items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[11px]"
+                    >
+                      <span className="font-medium text-muted-foreground">
+                        {c.header}:
+                      </span>
+                      <span className="font-mono">{c.value}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

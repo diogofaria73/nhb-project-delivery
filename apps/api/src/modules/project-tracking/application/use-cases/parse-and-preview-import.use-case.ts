@@ -77,6 +77,8 @@ export class ParseAndPreviewImportUseCase {
       rowsRejected: parseResult.rejectedRows.length,
       errors: parseResult.rejectedRows,
       errorsTruncated: parseResult.errorsTruncated,
+      skippedRows: parseResult.skippedRows,
+      skippedRowsTruncated: parseResult.skippedRowsTruncated,
       biSanity: parseResult.biSanity,
       delta: {
         ...delta,

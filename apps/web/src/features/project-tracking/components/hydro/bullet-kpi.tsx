@@ -7,6 +7,7 @@ interface BulletKpiProps {
   hint: string;
   value: number; // 0..100
   target?: number;
+  info?: React.ReactNode;
 }
 
 const TARGET_DEFAULT = 85;
@@ -16,6 +17,7 @@ export function BulletKpi({
   hint,
   value,
   target = TARGET_DEFAULT,
+  info,
 }: BulletKpiProps) {
   const { t } = useTranslation();
   const animatedValue = useAnimatedNumber(value, 750);
@@ -45,6 +47,9 @@ export function BulletKpi({
         <div>
           <div
             style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
               fontSize: 12,
               fontWeight: 600,
               color: 'var(--hy-ink)',
@@ -52,7 +57,8 @@ export function BulletKpi({
               letterSpacing: '.12em',
             }}
           >
-            {label}
+            <span>{label}</span>
+            {info}
           </div>
           <div
             style={{

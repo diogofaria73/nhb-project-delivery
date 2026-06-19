@@ -3,6 +3,7 @@ import type {
   ParseRowError,
   ParsePreviewRow,
   BiSanityDiff,
+  SkippedRowDetail,
 } from '@nhb-status-report/shared';
 
 export interface AcceptedRow {
@@ -23,6 +24,8 @@ export interface AcceptedRow {
 export interface ParseResult {
   totalRowsRead: number;
   rowsSkipped: number;
+  skippedRows: SkippedRowDetail[];
+  skippedRowsTruncated: boolean;
   acceptedRows: AcceptedRow[];
   rejectedRows: ParseRowError[];
   errorsTruncated: boolean;
@@ -32,5 +35,6 @@ export interface ParseResult {
 }
 
 export const ERROR_CAP = 200;
+export const SKIPPED_CAP = 200;
 export const WEEK_FLAG_BYTES = 8;
 export const MAX_ISO_WEEKS = 53;

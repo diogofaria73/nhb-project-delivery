@@ -18,6 +18,22 @@ export interface ParseRowError {
   reason: string;
 }
 
+export interface SkippedRowCell {
+  header: string;
+  value: string;
+}
+
+export interface SkippedRowDetail {
+  rowNumber: number;
+  /**
+   * Non-empty cells from known columns. Empty when the entire row is blank;
+   * populated when the row was skipped (no Project ID and no Project Name)
+   * but other columns still carry content — typically a stray row that
+   * deserves the user's attention.
+   */
+  sampleCells: SkippedRowCell[];
+}
+
 export interface ParsePreviewRow {
   projectId: string;
   projectName: string;
@@ -60,6 +76,8 @@ export interface ParseReportDto {
   rowsRejected: number;
   errors: ParseRowError[];
   errorsTruncated: boolean;
+  skippedRows: SkippedRowDetail[];
+  skippedRowsTruncated: boolean;
   biSanity: BiSanityDiff;
   delta: ParseDelta;
   preview: ParsePreviewRow[];

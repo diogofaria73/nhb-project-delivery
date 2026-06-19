@@ -25,6 +25,7 @@ import { ManagerBars } from '../components/hydro/manager-bars';
 import { WeeklyBars } from '../components/hydro/weekly-bars';
 import { ProjectDetailTable } from '../components/hydro/project-detail-table';
 import { StatusMultiSelect } from '../components/hydro/status-multi-select';
+import { InfoTooltip } from '../components/hydro/info-tooltip';
 import { ImportDialog } from '../components/import-dialog';
 
 export function DashboardPage() {
@@ -192,6 +193,13 @@ function DashboardContent({
                   label={t('dashboard.kpis.acumuladoAnualLabel')}
                   hint={t('dashboard.kpis.acumuladoAnualHint')}
                   value={acumuladoAnual}
+                  info={
+                    <InfoTooltip
+                      title={t('dashboard.kpis.acumuladoAnualLabel')}
+                      formula={t('dashboard.info.acumuladoAnual.formula')}
+                      description={t('dashboard.info.acumuladoAnual.description')}
+                    />
+                  }
                 />
                 <BulletKpi
                   label={t('dashboard.kpis.semanaCorrenteLabel')}
@@ -199,11 +207,27 @@ function DashboardContent({
                     w: filters.weekN,
                   })}
                   value={semanaCorrente}
+                  info={
+                    <InfoTooltip
+                      title={t('dashboard.kpis.semanaCorrenteLabel')}
+                      formula={t('dashboard.info.semanaCorrente.formula')}
+                      description={t('dashboard.info.semanaCorrente.description')}
+                    />
+                  }
                 />
               </div>
             </Panel>
 
-            <Panel title={t('dashboard.donut.panelTitle')}>
+            <Panel
+              title={t('dashboard.donut.panelTitle')}
+              info={
+                <InfoTooltip
+                  title={t('dashboard.donut.panelTitle')}
+                  formula={t('dashboard.info.donut.formula')}
+                  description={t('dashboard.info.donut.description')}
+                />
+              }
+            >
               <StatusDonut
                 counts={counts}
                 focus={filters.donutFocus}
@@ -225,12 +249,26 @@ function DashboardContent({
             <Panel
               title={t('dashboard.manager.panelTitle')}
               subtitle={t('dashboard.manager.subtitle')}
+              info={
+                <InfoTooltip
+                  title={t('dashboard.manager.panelTitle')}
+                  formula={t('dashboard.info.manager.formula')}
+                  description={t('dashboard.info.manager.description')}
+                />
+              }
             >
               <ManagerBars rows={managerRows} />
             </Panel>
             <Panel
               title={t('dashboard.weekly.panelTitle')}
               subtitle={t('dashboard.weekly.subtitle', { w: filters.weekN })}
+              info={
+                <InfoTooltip
+                  title={t('dashboard.weekly.panelTitle')}
+                  formula={t('dashboard.info.weekly.formula')}
+                  description={t('dashboard.info.weekly.description')}
+                />
+              }
             >
               <WeeklyBars
                 stats={weeklyData}
@@ -642,16 +680,27 @@ function SectionHeading({
 function Panel({
   title,
   subtitle,
+  info,
   children,
 }: {
   title: string;
   subtitle?: string;
+  info?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="hy-panel">
       <div className="hy-panel-header">
-        <div className="hy-panel-title">{title}</div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <div className="hy-panel-title">{title}</div>
+          {info}
+        </div>
         {subtitle && <div className="hy-panel-subtitle">{subtitle}</div>}
       </div>
       <div className="hy-panel-body">{children}</div>
